@@ -1,0 +1,47 @@
+const packageHandSlot = async ()=>{
+    try {
+        const packages = await PackageModel.find();
+        for (const packageId of packages) {
+            try {
+                const package = await PackageModel.findById(packageId._id);
+                if (!package) return ;
+                // if (!package) return res.status(404).json({ error: "Package not found." });
+                const currentSlotCount = package.slots.length;
+                const parent = currentSlotCount === 0 ? (await UserModel.findOne())._id : package.users[currentSlotCount - 1];
+                const nextUsers = package.users.slice(currentSlotCount * 4, (currentSlotCount + 1) * 4);
+                
+                const allxcs = await UserModel.find({ _id: { $in: nextUsers } });
+                
+                const totalCommition = allxcs.reduce((acc, user) => {
+                    const halfInvestment = user.investment * 0.5;
+                    // user.investment -= halfInvestment;
+                    return acc + halfInvestment;
+                }, 0);
+                // console.log(totalCommition)
+                // if (nextUsers.length < 4) return res.status(400).json({ error: "Not enough users to create a new slot." });
+                if (nextUsers.length < 4) {
+                    continue;
+                }
+                // if (nextUsers.length < 4) return console.log('Not enough users to create a new slot.')
+                const parentFind = await UserModel.findById(parent)
+                const newSlot = new SlotModel({ parent, package, users: nextUsers, status: "done"});
+                parentFind.currentSlotCount = currentSlotCount;
+                parentFind.currentSlotType = "PERENT";
+                parentFind.slots = newSlot;
+                parentFind.todayIncome += totalCommition;
+                parentFind.totalIncome += totalCommition;
+                await parentFind.save();
+                
+                package.slots.push(newSlot);
+                await package.save();
+                await newSlot.save();
+                
+            } catch (err) {
+                console.log(err.message)
+            }
+        }
+    } catch (error) {
+        
+    }
+}
+is function main slot hai isme hame slot ke andar tier1,tier2 add karna hai and schema create. and tier1 binary tree ke based par chalega ek parent ke 2 child ho jaye to bo parent nikal ke tier2 main shift ho jaye and tier2 ke 4 member ho jaye to bo slot2 ke tier1 main shift ho jaye and jab child ke koi 2 aur child ho to bo child parent hoga ho tier2 main parent main add ho jayega slot hme 15 chale and jab user 15 ke slot ke bahar nikalta hai to useke bar total kitna balance hai bo bhi lekar aaye and sabhi ke liye schema create and proper route create

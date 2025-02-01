@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <form action="/add-package" method="post" class="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+    <div class="mb-4">
+      <label for="userId" class="block text-gray-700 text-sm font-bold mb-2">Select User</label>
+      <select name="userId" id="userId" class="form-select block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+        <% users.map(user => { %>
+          <option value="<%= user._id %>"><%= user.username %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="mb-4">
+      <label for="packageId" class="block text-gray-700 text-sm font-bold mb-2">Select Package</label>
+      <select name="packageId" id="packageId" class="form-select block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+        <% packages.map(package => { %>
+          <option value="<%= package._id %>"><%= package.name %></option>
+        <% }) %>
+      </select>
+    </div>
+    <button type="submit" class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Add Package</button>
+  </form>
+</body>
+</html>

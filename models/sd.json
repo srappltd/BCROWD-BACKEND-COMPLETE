@@ -1,0 +1,39 @@
+{
+    "success": true,
+    "treeData": {
+        "userId": "679db754af33b3e6826b9100",
+        "name": "AutoUser1738389332039",
+        "leftChild": {
+            "userId": "679db781af33b3e6826c56d3",
+            "name": "Test1",
+            "leftChild": {
+                "userId": "679db797af33b3e6826cb2b3",
+                "name": "Test3",
+                "leftChild":  {
+                    "userId": "679db797af33b3e6826cb2b3",
+                    "name": "Test5",
+                    "leftChild": null,
+                    "rightChild": null
+                },
+                "rightChild": null
+            },
+            "rightChild": null
+        },
+        "rightChild":  {
+            "userId": "679db797af33b3e6826cb2b3",
+            "name": "Test2",
+            "leftChild": null,
+            "rightChild":  {
+                "userId": "679db797af33b3e6826cb2b3",
+                "name": "Test4",
+                "leftChild": null,
+                "rightChild":  {
+                    "userId": "679db797af33b3e6826cb2b3",
+                    "name": "Test6",
+                    "leftChild": null,
+                    "rightChild": null
+                }
+            }
+        }
+    }
+}
