@@ -40,16 +40,13 @@ const adminCreate = async () => {
     email: `amdin@gmail.com`,
     number: `123456789`,
     wallet_address: `0x${Math.random().toString(16).slice(2, 42)}`,
-    referred_by: 'admin', // Set to null or a specific referrer if needed
-    referral_code: newReferralCode,
+    referred_by: 'admin',
+    referral_code: 'admin',
     joiningMode:'left'
   });
   await newUser.save()
 };
-adminCreate()
-
-
-
+adminCreate();
 
 
 // Route to add a new slot for a package
@@ -89,19 +86,6 @@ router.get('/show-tree/:userId', async (req, res) => {
     const { userId } = req.params;
     // Get the binary tree data for the user
     const treeData = await getBinaryTreeData(userId);
-    if (!treeData) {
-      return res.status(404).json({ success: false, message: 'User not found or no tree data available' });
-    }
-    res.status(200).json({ success: true, treeData });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-router.get('/ratio-tree/:userId', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    // Now assign the user to a team
-    const teamAssignmentResult = await assignUserToTeam(newUser._id); // Pass the userId to assign them to the correct team
     if (!treeData) {
       return res.status(404).json({ success: false, message: 'User not found or no tree data available' });
     }
@@ -164,6 +148,7 @@ router.post('/add-user/two-by-two', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 router.post('/add-package/:id', async (req, res) => {
   try {
     const { amount, packageName } = req.body;
@@ -190,7 +175,13 @@ router.post('/add-package/:id', async (req, res) => {
 
 router.get('/find-user/:id', async (req, res) => {
   try {
-    const user = await UserModel.findById(req.params.id).populate('teamsIncome.history');
+    const user = await UserModel.findById(req.params.id).populate('teamsIncome.history').populate({
+      path: "teams",
+      populate: [
+          { path: "leftTeam", model: "User",select:'name _id invastment' },
+          { path: "rightTeam", model: "User",select:'name _id invastment' }
+      ]
+  });
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found." });
     }
@@ -200,9 +191,6 @@ router.get('/find-user/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
-
 
 // Route to add a new slot for a package
 router.post('/add-user/two-by-eight', async (req, res) => {
@@ -244,17 +232,6 @@ router.post('/add-user/two-by-eight', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
-
-
-
-
-
-
-
-
-
 
 router.post('/add-user-binary', async (req, res) => {
   try {
@@ -374,6 +351,7 @@ router.get('/users/two-by-two', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 })
+
 router.get('/users/two-by-two/:id', async (req, res) => {
   try {
     const users = await UserTwoByTwoModel.find({ userId: req.params.id, rebirthAuto: { $ne: 'Auto' } });
@@ -384,6 +362,94 @@ router.get('/users/two-by-two/:id', async (req, res) => {
   }
 });
 
+router.get('/users/two-by-two/summary/:id', async (req, res) => {
+  try {
+    const usersNotRebirth = await UserTwoByTwoModel.find({ userId: req.params.id, rebirthAuto: { $ne: 'Auto' } });
+    const totalActivation = usersNotRebirth.reduce((total, user) => total + user.activationFees, 0);
+    const totalRebirth = usersNotRebirth.reduce((total, user) => total + user.rebirthFees, 0);
+    const totalNetReward = usersNotRebirth.reduce((total, user) => total + user.netRewardFees, 0);
+    const totalUpgrationFees = usersNotRebirth.reduce((total, user) => total + user.upgrationFees, 0);
+    const totalInvestment = usersNotRebirth.reduce((total, user) => total + user.investment, 0);
+
+    const usersNotRebirthAuto = await UserTwoByTwoModel.find({ userId: req.params.id, rebirthAuto: { $ne: null } });
+    const totalActivationAuto = usersNotRebirthAuto.reduce((total, user) => total + user.activationFees, 0);
+    const totalRebirthAuto = usersNotRebirthAuto.reduce((total, user) => total + user.rebirthFees, 0);
+    const totalNetRewardAuto = usersNotRebirthAuto.reduce((total, user) => total + user.netRewardFees, 0);
+    const totalUpgrationFeesAuto = usersNotRebirthAuto.reduce((total, user) => total + user.upgrationFees, 0);
+    const totalInvestmentAuto = usersNotRebirthAuto.reduce((total, user) => total + user.investment, 0);
+
+    res.status(200).json({ 
+      success: true, 
+      users:{
+        totalActivation, 
+        totalRebirth, 
+        totalNetReward, 
+        totalUpgrationFees, 
+        totalInvestment
+      },
+      usersAuto:{
+        totalActivationAuto, 
+        totalRebirthAuto, 
+        totalNetRewardAuto, 
+        totalUpgrationFeesAuto, 
+        totalInvestmentAuto
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/users/two-by-eight/summary/:id', async (req, res) => {
+  try {
+    const usersNotRebirth = await UserTwoByEightModel.find({ userId: req.params.id, rebirthAuto: { $ne: 'Auto' } });
+    const totalActivation = usersNotRebirth.reduce((total, user) => total + user.activationFees, 0);
+    const totalRebirth = usersNotRebirth.reduce((total, user) => total + user.rebirthFees, 0);
+    const totalNetReward = usersNotRebirth.reduce((total, user) => total + user.netRewardFees, 0);
+    const totalUpgrationFees = usersNotRebirth.reduce((total, user) => total + user.upgrationFees, 0);
+    const totalInvestment = usersNotRebirth.reduce((total, user) => total + user.investment, 0);
+    
+    const usersNotRebirthAuto = await UserTwoByEightModel.find({ userId: req.params.id, rebirthAuto: { $ne: null } });
+    const totalActivationAuto = usersNotRebirthAuto.reduce((total, user) => total + user.activationFees, 0);
+    const totalRebirthAuto = usersNotRebirthAuto.reduce((total, user) => total + user.rebirthFees, 0);
+    const totalNetRewardAuto = usersNotRebirthAuto.reduce((total, user) => total + user.netRewardFees, 0);
+    const totalUpgrationFeesAuto = usersNotRebirthAuto.reduce((total, user) => total + user.upgrationFees, 0);
+    const totalInvestmentAuto = usersNotRebirthAuto.reduce((total, user) => total + user.investment, 0);
+
+    res.status(200).json({ 
+      success: true, 
+      users:{
+        totalActivation, 
+        totalRebirth, 
+        totalNetReward, 
+        totalUpgrationFees, 
+        totalInvestment
+      },
+      usersAuto:{
+        totalActivationAuto, 
+        totalRebirthAuto, 
+        totalNetRewardAuto, 
+        totalUpgrationFeesAuto, 
+        totalInvestmentAuto
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/users/final-user/:id', async (req, res) => {
+  try {
+    const finalTwoUser = await FinalEnterTwoByTwoModel.findOne({ userId: req.params.id});
+    const finalEightUser = await FinalEnterTwoByEightModel.findOne({ userId: req.params.id});
+    res.status(201).json({ success: true, data:{finalTwoUser,finalEightUser} });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 router.get('/users/rebirth/two-by-two/:id', async (req, res) => {
   try {
@@ -394,6 +460,7 @@ router.get('/users/rebirth/two-by-two/:id', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 })
+
 router.get('/users/rebirth-history/two-by-two/:id', async (req, res) => {
   try {
     const user = await UserTwoByTwoModel.findById(req.params.id);
@@ -405,8 +472,6 @@ router.get('/users/rebirth-history/two-by-two/:id', async (req, res) => {
   }
 })
 
-
-
 router.get('/users/two-by-eight', async (req, res) => {
   try {
     const users = await UserTwoByEightModel.find();
@@ -417,6 +482,7 @@ router.get('/users/two-by-eight', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 })
+
 router.get('/users/two-by-eight/:id', async (req, res) => {
   try {
     const users = await UserTwoByEightModel.find({ userId: req.params.id, rebirthAuto: { $ne: 'Auto' } });
@@ -426,6 +492,7 @@ router.get('/users/two-by-eight/:id', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 })
+
 router.get('/users/rebirth/two-by-eight/:id', async (req, res) => {
   try {
     const users = await UserTwoByEightModel.find({ userId: req.params.id, rebirthAuto: { $ne: null } });
@@ -435,6 +502,7 @@ router.get('/users/rebirth/two-by-eight/:id', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 })
+
 router.get('/users/rebirth-history/two-by-eight/:id', async (req, res) => {
   try {
     const user = await UserTwoByEightModel.findById(req.params.id);
@@ -446,9 +514,6 @@ router.get('/users/rebirth-history/two-by-eight/:id', async (req, res) => {
   }
 })
 
-
-
-
 router.get('/final-users/two-by-two', async (req, res) => {
   try {
     const users = await FinalEnterTwoByTwoModel.find();
@@ -459,6 +524,7 @@ router.get('/final-users/two-by-two', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 })
+
 router.get('/final-users/two-by-two/:id', async (req, res) => {
   try {
     const users = await FinalEnterTwoByTwoModel.findOne({ userId: req.params.id });
@@ -479,9 +545,10 @@ router.get('/final-users/two-by-eight', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 })
+
 router.get('/final-users/two-by-eight/:id', async (req, res) => {
   try {
-    const users = await FinalEnterTwoByEightModel.findById({ userId: req.params.id });
+    const users = await FinalEnterTwoByEightModel.findOne({ userId: req.params.id });
     res.json({ users });
   } catch (error) {
     console.log(error);
@@ -490,22 +557,7 @@ router.get('/final-users/two-by-eight/:id', async (req, res) => {
 })
 
 
-// const dfg = async () => {
-//   try {
-//     const users = await UserTwoByTwoModel.find();
-//     const totalActivationFees = users.reduce((total, user) => total + user.activationFees, 0);
-//     const totalRebirthFees = users.reduce((total, user) => total + user.rebirthFees, 0);
-//     const totalnetRewardFees = users.reduce((total, user) => total + user.netRewardFees, 0);
-//     console.log({totalActivationFees,totalRebirthFees,totalnetRewardFees,totalUsers:users.length})
-//     return totalActivationFees;
-//   } catch (error) {
-//     console.log(error);
-//   }
-// }
-
-// console.log(dfg())
-
-
+//----------------------------------------- SLOT CREATE AND TIER START ----------------------------------------
 router.get('/users/divide-package-two-by-two/:id', async (req, res) => {
   try {
     const package = await PackageTwoByTwoModel.findOne({ amount: 25 }).populate({
@@ -534,6 +586,7 @@ router.get('/users/divide-package-two-by-two/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 router.get('/users/divide-package-two-by-eight/:id', async (req, res) => {
   try {
     const package = await PackageTwoByTwoModel.findOne({ amount: 25 }).populate({
@@ -557,6 +610,9 @@ router.get('/users/divide-package-two-by-eight/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+//----------------------------------------- SLOT CREATE AND TIER END ----------------------------------------
+
+
 
 router.get('/user/two-by-two/:id', async (req, res) => {
   try {
@@ -570,6 +626,7 @@ router.get('/user/two-by-two/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 })
+
 router.get('/user/two-by-eight/:id', async (req, res) => {
   try {
     const user = await UserTwoByEightModel.findById(req.params.id);
