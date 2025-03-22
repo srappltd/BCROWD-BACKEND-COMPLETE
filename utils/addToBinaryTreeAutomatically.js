@@ -46,14 +46,15 @@ const addToBinaryTreeAutomatically = async (newUser, referred_by) => {
 
 // ✅ Recursive function to get binary tree data for a user
 const getBinaryTreeData = async (userId) => {
-  const user = await UserModel.findById(userId).populate('left_child right_child');
+  const user = await UserModel.findById(userId).populate('left_child right_child').populate('parchases');
 
   if (!user) return null;
-
+  if (!user.is_active) return null;
   // Format the current user and their children
   return {
     userId: user._id,
     name: user.name,
+    parchases: user.parchases,
     leftChild: user.left_child ? await getBinaryTreeData(user.left_child._id) : null,
     rightChild: user.right_child ? await getBinaryTreeData(user.right_child._id) : null,
   };
