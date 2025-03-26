@@ -16,7 +16,6 @@ exports.packageTwoByTwoSlotMethod = async ({ tier1, tier2, count, doubleAmount, 
         const parent2Find = await UserTwoByTwoModel.findById(parent);
 
         const allFind = await UserTwoByTwoModel.find({ _id: parent });
-        // Find index of existing tierCount
         const index = parent2Find.currentTierHistory.findIndex(
             (entry) => entry.tierCount === (currentTier-1)
         );

@@ -5,7 +5,7 @@ const getCompleteSponsorArray = async (sponsorId, limit, currentDepth = 0, resul
         return result;
     }
     try {
-        const user = await UserModel.findOne({ referral_code: sponsorId }).populate('referred_by', 'name email mobile wallet_address referred_by referral_code');
+        const user = await UserModel.findOne({ referral_code: sponsorId })
         if (!user) {
             return result;
         }

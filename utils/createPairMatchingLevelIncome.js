@@ -81,7 +81,7 @@ const calculateLevelInvestmentShare = async () => {
                 continue
             }
             if (user.lastTeamIncomeDate && new Date() - user.lastTeamIncomeDate < 6 * 60 * 60 * 1000) {
-                console.log('Date')
+                // console.log('Date')
                 continue
             }
             user.lastTeamIncomeDate = new Date()
@@ -92,7 +92,7 @@ const calculateLevelInvestmentShare = async () => {
             const newTeam = new TeamIncomeModel({ amount: rward, client: user._id, totalTeam: teamNull.length });
             user.teamsIncome.history.push(newTeam._id);
             await newTeam.save();
-            await LevelIncomeDistribute({userId:user._id,amount:rward,teamIncome:newTeam._id});
+            await LevelIncomeDistribute({userId:user._id,amount:rward,teamIncomeId:newTeam._id});
             await user.save();
             console.log('Team Income is created.');
         }

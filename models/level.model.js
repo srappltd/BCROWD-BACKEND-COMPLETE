@@ -9,8 +9,8 @@ const levelSchema = new mongoose.Schema({
         default:0
     },
     levelName:{
-        type:Number,
-        default:0
+        type:String,
+        default:null
     },
     status:{
         type:String,

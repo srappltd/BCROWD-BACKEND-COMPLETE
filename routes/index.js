@@ -761,7 +761,7 @@ router.get('/user/level-income-history/:id', async (req, res) => {
   }
 })
 
-router.get('/user/level-income-history', async (req, res) => {
+router.get('/admin/level-income-history', async (req, res) => {
   try {
     const level = await LevelModel.find({}).populate({path:'userId',select:"name email wallet_address invastment"});
     res.status(200).json({success:true, data: level,message:"Level Admin Side Income" });
