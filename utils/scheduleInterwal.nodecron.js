@@ -44,11 +44,22 @@ cron.schedule('* * * * * *', async () => {
     isTwoByTwoProcessing = true;
     try {
         await twoByTwoHandSlot();
-        await rebirthAutoUserTwoByTwoCreate();
     } catch (error) {
         console.log(error);
     } finally {
         isTwoByTwoProcessing = false;
+    }
+});
+let isTwoByTwoRebirthProcessing = false;
+cron.schedule('* * * * * *', async () => {
+    if (isTwoByTwoRebirthProcessing) return;
+    isTwoByTwoRebirthProcessing = true;
+    try {
+        await rebirthAutoUserTwoByTwoCreate();
+    } catch (error) {
+        console.log(error);
+    } finally {
+        isTwoByTwoRebirthProcessing = false;
     }
 });
 // ----- Schedule to run every 1 Seconds TwoByTwo and Rebirth TwoByTwo End  -----
@@ -62,11 +73,23 @@ cron.schedule('* * * * * *', async () => {
     isTwoByEightProcessing = true;
     try {
         await twoByEightHandSlot();
-        await rebirthAutoUserTwoByEightCreate();
     } catch (error) {
         console.log(error);
     } finally {
         isTwoByEightProcessing = false;
+    }
+});
+
+let isTwoByEightRebirthProcessing = false;
+cron.schedule('* * * * * *', async () => {
+    if (isTwoByEightRebirthProcessing) return;
+    isTwoByEightRebirthProcessing = true;
+    try {
+        await rebirthAutoUserTwoByEightCreate();
+    } catch (error) {
+        console.log(error);
+    } finally {
+        isTwoByEightRebirthProcessing = false;
     }
 });
 // ----- Schedule to run every 1 Seconds Start TwoByEight and Rebirth TwoByEight Income -----

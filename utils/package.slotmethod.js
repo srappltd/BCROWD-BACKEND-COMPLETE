@@ -10,15 +10,20 @@ const { UserTwoByTwoModel, UserTwoByEightModel } = require("../models/user.model
 exports.packageTwoByTwoSlotMethod = async ({ tier1, tier2, count, doubleAmount, currentTier }) => {
     try {
         const currentTierCount = tier2.length;
-        const parent = currentTierCount === 0 ? (await UserTwoByTwoModel.findOne())._id : tier1[currentTierCount];
-        const nextUsers = tier1.slice(currentTierCount * count, (currentTierCount + 1) * count);
+        const parent = tier1[currentTierCount];
+        if (!parent) return;
+        // const nextUsers = tier1.slice(currentTierCount * count, (currentTierCount + 1) * count);
+        const nextUsers = tier1.slice(currentTierCount * (count - 1), (currentTierCount + 1) * (count));
+        nextUsers.shift();
         const parentFind = await UserTwoByTwoModel.findById(parent);
+        if (!parentFind) return;
         const parent2Find = await UserTwoByTwoModel.findById(parent);
-
+        if (!parent2Find) return;
         const allFind = await UserTwoByTwoModel.find({ _id: parent });
         const index = parent2Find.currentTierHistory.findIndex(
             (entry) => entry.tierCount === (currentTier-1)
         );
+        
         if (nextUsers.length != 0) {
         if (index !== -1) {
                 if (nextUsers.length < count) {
@@ -38,7 +43,8 @@ exports.packageTwoByTwoSlotMethod = async ({ tier1, tier2, count, doubleAmount, 
         }
 
         await parent2Find.save();
-        if (nextUsers.length < count) return;
+        // if (nextUsers.length < count) return;
+        if (nextUsers.length < (count - 1)) return;
 
         parentFind.currentTierCount = currentTier;
         parentFind.currentTierType = "PARENT";
@@ -85,15 +91,20 @@ exports.packageTwoByTwoSlotMethod = async ({ tier1, tier2, count, doubleAmount, 
 exports.packageTwoByEightSlotMethod = async ({ tier1, tier2, count, doubleAmount, currentTier }) => {
     try {
         const currentTierCount = tier2.length;
-        const parent = currentTierCount === 0 ? (await UserTwoByEightModel.findOne())._id : tier1[currentTierCount];
-        const nextUsers = tier1.slice(currentTierCount * count, (currentTierCount + 1) * count);
+        const parent = tier1[currentTierCount];
+        if (!parent) return;
+        // const nextUsers = tier1.slice(currentTierCount * count, (currentTierCount + 1) * count);
+        const nextUsers = tier1.slice(currentTierCount * (count - 1), (currentTierCount + 1) * (count));
+        nextUsers.shift();
         const parentFind = await UserTwoByEightModel.findById(parent);
+        if (!parentFind) return;
         const parent2Find = await UserTwoByEightModel.findById(parent);
+        if (!parent2Find) return;
         // Find index of existing tierCount
+        const allFind = await UserTwoByEightModel.find({ _id: parent });
         const index = parent2Find.currentTierHistory.findIndex(
             (entry) => entry.tierCount === (currentTier-1)
         );
-
         if(nextUsers.length != 0) {
         if (index !== -1) {
                 if (nextUsers.length < count) {
@@ -112,8 +123,7 @@ exports.packageTwoByEightSlotMethod = async ({ tier1, tier2, count, doubleAmount
             }
         }
         await parent2Find.save();
-
-        if (nextUsers.length < count) return;
+        if (nextUsers.length < (count - 1)) return;
 
         parentFind.currentTierType = "PARENT";
         parentFind.activationFees *= doubleAmount;
@@ -135,10 +145,10 @@ exports.packageTwoByEightSlotMethod = async ({ tier1, tier2, count, doubleAmount
         }
         const newRebirth = new RebirthTwoByEightModel({ clientId: parentFind._id, activationFees: parentFind.activationFees, currentTierCount: parentFind.currentTierCount, investment: parentFind.investment, netRewardFees: parentFind.netRewardFees, rebirthAuto: parentFind.rebirthAuto, rebirthFees: parentFind.rebirthFees, upgrationFees: parentFind.upgrationFees })
         const newSlotHistory = new SlotHistoryTwoByEightModel({ childs: nextUsers, parentId: parent, activationFees: parentFind.activationFees, currentTierCount: parentFind.currentTierCount, investment: parentFind.investment, netRewardFees: parentFind.netRewardFees, rebirthAuto: parentFind.rebirthAuto, rebirthFees: parentFind.rebirthFees, upgrationFees: parentFind.upgrationFees })
-        parent2Find.history.push(newRebirth._id)
+        parent2Find.history.push(newRebirth._id);
         parent2Find.slothistory.push(newSlotHistory._id);
-        await newRebirth.save()
-        await newSlotHistory.save()
+        await newRebirth.save();
+        await newSlotHistory.save();
         await finalEnterUser.save();
         await parentFind.save();
         await parent2Find.save();
