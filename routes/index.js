@@ -2,39 +2,21 @@ var express = require('express');
 var router = express.Router();
 const { UserTwoByEightModel, UserTwoByTwoModel, UserModel } = require('../models/user.model');
 const { PackageTwoByTwoModel, PackageTwoByEightModel } = require('../models/package.model');
-const { twoByTwoHandSlot, twoByEightHandSlot } = require('../utils/autoslot')
-
-
-const cron = require('node-cron');
 const { FinalEnterTwoByEightModel, FinalEnterTwoByTwoModel } = require('../models/finalenteruser.model');
 const { RebirthTwoByEightModel, RebirthTwoByTwoModel } = require('../models/rebirth.model');
-const { rebirthAutoUserTwoByTwoCreate, rebirthAutoUserTwoByEightCreate } = require('../utils/rebirth.autocreate');
-const { addToBinaryTreeAutomatically, getBinaryTreeData } = require('../utils/addToBinaryTreeAutomatically');
-const { assignUserToTeam, findCorrectPosition, findPositionUnderReferrer, getDownlineUsers } = require('../utils/binaryTreeTeam');
+const {  getBinaryTreeData } = require('../utils/addToBinaryTreeAutomatically');
+const { assignUserToTeam, getDownlineUsers } = require('../utils/binaryTreeTeam');
 const { PurchaseModel } = require('../models/parchase.model');
+const { LevelModel } = require('../models/level.model');
 
-setInterval(() => {
-  twoByTwoHandSlot()
-  twoByEightHandSlot()
-}, 800)
-setInterval(() => {
-  rebirthAutoUserTwoByTwoCreate()
-  rebirthAutoUserTwoByEightCreate()
-}, 5000)
 
-// setInterval(()=>{
-//   twoByEightHandSlot()
-// },800);
 
-// cron.schedule('*/0.1 * * * * *',()=>{
-//   packageHandSlot()
-// })
 
 const adminCreate = async () => {
   if (await UserModel.findOne({ email: 'amdin@gmail.com' })) {
     return
   }
-  const newReferralCode = `WC${Math.floor(100000000 + Math.random() * 900000000)}`;
+  const newReferralCode = `WC${Math.floor(100000000 + Math.random() * 999999999)}`;
   const newUser = new UserModel({
     name: `AutoUser${Date.now()}`,
     email: `amdin@gmail.com`,
@@ -53,7 +35,7 @@ adminCreate();
 router.post('/register', async (req, res) => {
   try {
     const { name, email, number, wallet_address, referred_by } = req.body;
-    const newReferralCode = `WC${Math.floor(100000000 + Math.random() * 900000000)}`;
+    const newReferralCode = `WC${Math.floor(100000000 + Math.random() * 999999999)}`;
 
     if (!name || !email || !number || !wallet_address || !referred_by) {
       return res.status(400).json({ success: false, message: 'All fields are required.' });
@@ -723,10 +705,9 @@ router.get('/users/divide-package-two-by-eight/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+
 //----------------------------------------- SLOT CREATE AND TIER END ----------------------------------------
-
-
-
 router.get('/user/two-by-two/:id', async (req, res) => {
   try {
     const user = await UserTwoByTwoModel.findById(req.params.id);
@@ -767,6 +748,28 @@ router.get('/user/divide-package-two-by-eight/:id', async (req, res) => {
   }
 })
 
+
+// ------------------- level incomes start ------------------------------------------
+router.get('/user/level-income-history/:id', async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.params.id,{_id:1,email:1,name:1});
+    const level = await LevelModel.find({userId:user._id})
+    res.status(200).json({success:true, data: level,message:"Level Income" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({success:false, message: error.message });
+  }
+})
+
+router.get('/user/level-income-history', async (req, res) => {
+  try {
+    const level = await LevelModel.find({}).populate({path:'userId',select:"name email wallet_address invastment"});
+    res.status(200).json({success:true, data: level,message:"Level Admin Side Income" });
+  } catch (error) {
+    res.status(500).json({success:false, message: error.message });
+  }
+})
+// ------------------- level incomes End ------------------------------------------
 
 
 

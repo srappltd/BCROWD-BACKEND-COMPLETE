@@ -5,11 +5,10 @@
  * @returns {Object} - Parent and grandparent share.
  */
 function calculateDistribution(investment, ratio) {
-    const totalRatio = ratio.parent + ratio.grandParent;
-    const parentShare = (investment * ratio.parent) / totalRatio;
-    const grandParentShare = (investment * ratio.grandParent) / totalRatio;
-    return { parentShare, grandParentShare };
-  }
-  
-  module.exports = calculateDistribution;
-  
+  const totalRatio = ratio.parent + ratio.grandParent;
+  const parentShare = (investment * ratio.parent) / totalRatio;
+  const grandParentShare = (investment * ratio.grandParent) / totalRatio;
+  return { parentShare, grandParentShare };
+}
+
+module.exports = calculateDistribution;

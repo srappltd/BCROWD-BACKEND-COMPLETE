@@ -15,6 +15,15 @@ const userTwoByTwoSchema = new Schema({
   rebirthAuto: { type: String, default: null },
   history: [{ type: mongoose.Schema.Types.ObjectId, ref: 'RebirthTwoByTwo', default: null }],
   slothistory: [{ type: mongoose.Schema.Types.ObjectId, ref: 'SlothistoryTwoByTwo', default: null }],
+  matchingPairs: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "MatchingPair",
+    default: []
+  }],
+  matchingPair: {
+    type: Number,
+    default: 0
+  },
   currentTierHistory: [{
     tierCount: {
       type: Number,
@@ -111,12 +120,24 @@ const userSchema = new Schema({
   parchases: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Purchase', default: [] }],
   invastment: { type: Number, default: 0 },
   teamsIncome:{
+    income:{ type: Number, default: 0 },
     history:[{
       type:mongoose.Schema.Types.ObjectId,
       ref:"TeamIncome",
       default:[]
-    }],
-    income:{ type: Number, default: 0 }
+    }]
+  },
+  totalIncome:{
+    type:Number,
+    default:0
+  },
+  levelIncome:{
+    income:{ type: Number, default: 0 },
+    history:[{
+      type:mongoose.Schema.Types.ObjectId,
+      ref:"Level",
+      default:[]
+    }]
   },
   joiningMode: {
     type: String,
@@ -129,6 +150,7 @@ const userSchema = new Schema({
     leftTeam: [{ type: mongoose.Schema.Types.ObjectId, ref:'Users' }],
     rightTeam: [{ type: mongoose.Schema.Types.ObjectId, ref:'Users' }],
     checked: { type: Boolean, default: false },
+    createdAt: { type: Date, default: null },
   }],
   lastTeamIncomeDate:{
     type:Date,
