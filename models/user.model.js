@@ -142,6 +142,7 @@ const userSchema = new Schema({
   joiningMode: {
     type: String,
     enum: ['left', 'right'],
+    default:'left'
   },
   teams: [{
     ratio: { type: String, enum: ['2:1', '1:2', '1:1'], default: '1:1' },
@@ -174,17 +175,13 @@ userSchema.methods.addToBinaryTree = async function (newUser, joiningMode,UserMo
         await this.save();
         return this.right_child;
       }
-      // If both left and right are filled, check if the left child has space
       if (this.left_child && joiningMode == 'left') {
         const leftChild = await UserModel.findById(this.left_child);
         if (leftChild) {
-          const result = await leftChild.addToBinaryTree(newUser,joiningMode,UserModel); // Recursively add to the left child
+          const result = await leftChild.addToBinaryTree(newUser,joiningMode,UserModel);
           if (result) return result;
         }
       }
-
-  
-      // If left child does not have space, check if the right child has space
       if (this.right_child && joiningMode == 'right') {
         const rightChild = await UserModel.findById(this.right_child);
         if (rightChild) {
@@ -192,15 +189,12 @@ userSchema.methods.addToBinaryTree = async function (newUser, joiningMode,UserMo
           if (result) return result;
         }
       }
-  
-      // If no spots are available, check the sponsor’s tree
       if (this.sponsorUserId) {
         const sponsor = await UserModel.findOne({referral_code:this.referral_code});
         if (sponsor) {
           return sponsor.addToBinaryTree(newUser,joiningMode,UserModel); // Recursively check sponsor
         }
       }
-      // If no available spot is found, throw an error
       throw new Error('Unable to add user. Both left and right are filled.');
     } catch (error) {
       throw error;

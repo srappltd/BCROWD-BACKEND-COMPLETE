@@ -15,7 +15,7 @@ const teamIncomeSchema = new mongoose.Schema({
     amount: { type: Number, required: true },
     status: { type: String, default:"Team Set Match Reward" },
     totalTeam: { type: Number, default:0 },
-    client: { type: mongoose.Schema.Types.ObjectId, ref: 'Users', required: true },
+    client: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 }, { timestamps: true, versionKey: false });
 
 exports.TeamIncomeModel = mongoose.model('TeamIncome', teamIncomeSchema);
