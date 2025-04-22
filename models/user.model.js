@@ -105,7 +105,7 @@ exports.UserTwoByEightModel = mongoose.model('UserTwoByEight', userTwoByEightSch
 
 const userSchema = new Schema({
   name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true },
   number: { type: String, required: true },
   wallet_address: { type: String, required: true },
   referred_by: { type: String, default: null },
@@ -148,8 +148,8 @@ const userSchema = new Schema({
     ratio: { type: String, enum: ['2:1', '1:2', '1:1'], default: '1:1' },
     // leftTeam: [{ userId: mongoose.Schema.Types.ObjectId, name: String }],
     // rightTeam: [{ userId: mongoose.Schema.Types.ObjectId, name: String }],
-    leftTeam: [{ type: mongoose.Schema.Types.ObjectId, ref:'Users' }],
-    rightTeam: [{ type: mongoose.Schema.Types.ObjectId, ref:'Users' }],
+    leftTeam: [{ type: mongoose.Schema.Types.ObjectId, ref:'User' }],
+    rightTeam: [{ type: mongoose.Schema.Types.ObjectId, ref:'User' }],
     checked: { type: Boolean, default: false },
     createdAt: { type: Date, default: null },
   }],

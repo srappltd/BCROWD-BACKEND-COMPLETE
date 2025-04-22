@@ -2,9 +2,9 @@ const mongoose = require('mongoose');
 
 const teamSchema = new mongoose.Schema({
     ratio: { type: String, enum: ['2:1', '1:2', '1:1'], default: '1:1' },
-    leftTeam: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Users' }],
-    rightTeam: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Users' }],
-    clientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Users' },
+    leftTeam: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    rightTeam: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    clientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     checked: { type: Boolean, default: false },
 }, { timestamps: true, versionKey: false });
 

@@ -1,0 +1,115 @@
+{
+    "67e7b2d6e879e75fcac85a5b": {
+        "_id": "67e7b2d6e879e75fcac85a5b",
+        "parent_id": null,
+        "left_child": "67e7b2ebe879e75fcac85aaf",
+        "right_child": "67e7b2f5e879e75fcac85ade",
+        "left": {
+            "_id": "67e7b2ebe879e75fcac85aaf",
+            "parent_id": "67e7b2d6e879e75fcac85a5b",
+            "left_child": "67e7b301e879e75fcac85b15",
+            "right_child": "67e7b311e879e75fcac85b63",
+            "left": {
+                "_id": "67e7b301e879e75fcac85b15",
+                "parent_id": "67e7b2ebe879e75fcac85aaf",
+                "left_child": null,
+                "right_child": null,
+                "left": {
+                    "_id": "67e7b311e879e75fcac85b63",
+                    "parent_id": "67e7b2ebe879e75fcac85aaf",
+                    "left_child": null,
+                    "right_child": null,
+                    "left": {
+                        "_id": "67e7b311e879e75fcac85b63",
+                        "parent_id": "67e7b2ebe879e75fcac85aaf",
+                        "left_child": null,
+                        "right_child": null,
+                        "left": {
+                            "_id": "67e7b311e879e75fcac85b63",
+                            "parent_id": "67e7b2ebe879e75fcac85aaf",
+                            "left_child": null,
+                            "right_child": null,
+                            "left": {
+                                "_id": "67e7b311e879e75fcac85b63",
+                                "parent_id": "67e7b2ebe879e75fcac85aaf",
+                                "left_child": null,
+                                "right_child": null,
+                                "left": {
+                                    "_id": "67e7b311e879e75fcac85b63",
+                                    "parent_id": "67e7b2ebe879e75fcac85aaf",
+                                    "left_child": null,
+                                    "right_child": null,
+                                    "left": {
+                                        "_id": "67e7b311e879e75fcac85b63",
+                                        "parent_id": "67e7b2ebe879e75fcac85aaf",
+                                        "left_child": null,
+                                        "right_child": null,
+                                        "left": null,
+                                        "right": null
+                                    },
+                                    "right": null
+                                },
+                                "right": null
+                            },
+                            "right": null
+                        },
+                        "right": null
+                    },
+                    "right": null
+                },
+                "right": null
+            },
+            "right": null
+        },
+        "right": {
+            "_id": "67e7b2f5e879e75fcac85ade",
+            "parent_id": "67e7b2d6e879e75fcac85a5b",
+            "left_child": "67e7b31fe879e75fcac85ba4",
+            "right_child": "67e7b333e879e75fcac85bfb",
+            "left": null,
+            "right": {
+                "_id": "67e7b333e879e75fcac85bfb",
+                "parent_id": "67e7b2f5e879e75fcac85ade",
+                "left_child": null,
+                "right_child": null,
+                "left": null,
+                "right": {
+                    "_id": "67e7b333e879e75fcac85bfb",
+                    "parent_id": "67e7b2f5e879e75fcac85ade",
+                    "left_child": null,
+                    "right_child": null,
+                    "left": null,
+                    "right": {
+                        "_id": "67e7b333e879e75fcac85bfb",
+                        "parent_id": "67e7b2f5e879e75fcac85ade",
+                        "left_child": null,
+                        "right_child": null,
+                        "left": null,
+                        "right": {
+                            "_id": "67e7b333e879e75fcac85bfb",
+                            "parent_id": "67e7b2f5e879e75fcac85ade",
+                            "left_child": null,
+                            "right_child": null,
+                            "left": null,
+                            "right": {
+                                "_id": "67e7b333e879e75fcac85bfb",
+                                "parent_id": "67e7b2f5e879e75fcac85ade",
+                                "left_child": null,
+                                "right_child": null,
+                                "left": null,
+                                "right": {
+                                    "_id": "67e7b333e879e75fcac85bfb",
+                                    "parent_id": "67e7b2f5e879e75fcac85ade",
+                                    "left_child": null,
+                                    "right_child": null,
+                                    "left": null,
+                                    "right": null
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

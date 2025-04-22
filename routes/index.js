@@ -4,27 +4,28 @@ const { UserTwoByEightModel, UserTwoByTwoModel, UserModel } = require('../models
 const { PackageTwoByTwoModel, PackageTwoByEightModel } = require('../models/package.model');
 const { FinalEnterTwoByEightModel, FinalEnterTwoByTwoModel } = require('../models/finalenteruser.model');
 const { RebirthTwoByEightModel, RebirthTwoByTwoModel } = require('../models/rebirth.model');
-const {  getBinaryTreeData } = require('../utils/addToBinaryTreeAutomatically');
+const { getBinaryTreeData, buildTree } = require('../utils/addToBinaryTreeAutomatically');
 const { assignUserToTeam, getDownlineUsers } = require('../utils/binaryTreeTeam');
 const { PurchaseModel } = require('../models/parchase.model');
 const { LevelModel } = require('../models/level.model');
+const { TeamIncomeModel } = require('../models/team.model');
 
 
 
 
 const adminCreate = async () => {
-  if (await UserModel.findOne({ email: 'amdin@gmail.com' })) {
+  if (await UserModel.findOne({ email: 'admin@wecrowd.world' })) {
     return
   }
   const newReferralCode = `WC${Math.floor(100000000 + Math.random() * 999999999)}`;
   const newUser = new UserModel({
     name: `AutoUser${Date.now()}`,
-    email: `amdin@gmail.com`,
+    email: `admin@wecrowd.world`,
     number: `123456789`,
     wallet_address: `0x${Math.random().toString(16).slice(2, 42)}`,
-    referred_by: 'admin',
-    referral_code: 'admin',
-    joiningMode:'left'
+    referred_by: 'WECROWD',
+    referral_code: 'WECROWD',
+    joiningMode: 'left'
   });
   await newUser.save()
 };
@@ -46,15 +47,15 @@ router.post('/register', async (req, res) => {
     const newUser = new UserModel({ name, email, number, wallet_address, referred_by, referral_code: newReferralCode });
     const referrer = await UserModel.findOne({ referral_code: referred_by });
     if (referrer) {
+      const partnersJoiningPosition = (referrer.partners.length % 2 === 0) ? 'left' : 'right' 
       referrer.partners.push(newUser._id)
       newUser.parent_id = referrer._id;
-      newUser.joiningMode = referrer.joiningMode == 'left' ? 'left' : 'right';
+      newUser.joiningMode = partnersJoiningPosition;
       await referrer.save();
-      await referrer.addToBinaryTree(newUser,newUser.joiningMode,UserModel)
-      referrer.joiningMode = referrer.joiningMode == 'left' ? 'right':'left' ;
+
+      await referrer.addToBinaryTree(newUser, partnersJoiningPosition , UserModel)
       await referrer.save();
     }
-    await assignUserToTeam(newUser._id);
     await newUser.save();
     res.status(201).json({ success: true, message: "All users added successfully.", data: newUser });
   } catch (err) {
@@ -66,10 +67,9 @@ router.post('/register', async (req, res) => {
 router.get('/show-tree/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    // Get the binary tree data for the user
-    const treeData = await getBinaryTreeData(userId);
+    const treeData = await buildTree(userId);
     if (!treeData) {
-      return res.status(404).json({ success: false, message: 'User not found or no tree data available' });
+      return res.status(500).json({ success: false, message: 'User not found or no tree data available' });
     }
     res.status(200).json({ success: true, treeData });
   } catch (error) {
@@ -81,7 +81,7 @@ router.get('/tree-downline/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const sdf = await getDownlineUsers(userId)
-    res.status(200).json({ success: true, data:sdf });
+    res.status(200).json({ success: true, data: sdf });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -99,18 +99,18 @@ router.post('/add-user/two-by-two', async (req, res) => {
       packageTwoByTwo = new PackageTwoByTwoModel({ amount: 25 });
       await packageTwoByTwo.save();
     }
-    const newUserTwoByTwoData = new UserTwoByTwoModel({ userId, username: userName, investment: purchaseAmount, activationFees: activationFee, netRewardFees: totalNetReward, rebirthFees: rebirthFee, upgrationFees: upgradationFee,currentTierCount:1 });
+    const newUserTwoByTwoData = new UserTwoByTwoModel({ userId, username: userName, investment: purchaseAmount, activationFees: activationFee, netRewardFees: 1.5, rebirthFees: 1, upgrationFees: 2.5, currentTierCount: 1 });
 
     const finalEnterTwoUser = await FinalEnterTwoByTwoModel.findOne({ userId: userId });
     if (!finalEnterTwoUser) {
-      const newFinalUser = new FinalEnterTwoByTwoModel({ userId: userId, username: userName, investment: purchaseAmount, activationFees: activationFee, upgrationFees: upgradationFee, rebirthFees: rebirthFee, restrebirthFees: rebirthFee, netRewardFees: totalNetReward, currentTierCount: 1 });
+      const newFinalUser = new FinalEnterTwoByTwoModel({ userId: userId, username: userName, investment: purchaseAmount, activationFees: activationFee, upgrationFees: 0, rebirthFees: 0, restrebirthFees: 0, netRewardFees: 0, currentTierCount: 1 });
       await newFinalUser.save();
     } else {
-      finalEnterTwoUser.netRewardFees += totalNetReward;
       finalEnterTwoUser.activationFees += activationFee;
-      finalEnterTwoUser.rebirthFees += rebirthFee;
-      finalEnterTwoUser.restrebirthFees += rebirthFee;
-      finalEnterTwoUser.upgrationFees += upgradationFee;
+      finalEnterTwoUser.netRewardFees += 0;
+      finalEnterTwoUser.rebirthFees += 0;
+      finalEnterTwoUser.restrebirthFees += 0;
+      finalEnterTwoUser.upgrationFees += 0;
       await finalEnterTwoUser.save();
     }
 
@@ -119,9 +119,9 @@ router.post('/add-user/two-by-two', async (req, res) => {
       await packageTwoByTwo.save();
     }
 
-    const newRebirth = new RebirthTwoByTwoModel({ clientId: newUserTwoByTwoData._id, activationFees: newUserTwoByTwoData.activationFees, currentTierCount: 1, investment: newUserTwoByTwoData.investment, netRewardFees: newUserTwoByTwoData.netRewardFees, rebirthAuto: newUserTwoByTwoData.rebirthAuto, rebirthFees: newUserTwoByTwoData.rebirthFees, upgrationFees: newUserTwoByTwoData.upgrationFees })
-    newUserTwoByTwoData.history.push(newRebirth._id);
-    await newRebirth.save()
+    // const newRebirth = new RebirthTwoByTwoModel({ clientId: newUserTwoByTwoData._id, activationFees: newUserTwoByTwoData.activationFees, currentTierCount: 1, investment: newUserTwoByTwoData.investment, netRewardFees: newUserTwoByTwoData.netRewardFees, rebirthAuto: newUserTwoByTwoData.rebirthAuto, rebirthFees: newUserTwoByTwoData.rebirthFees, upgrationFees: newUserTwoByTwoData.upgrationFees })
+    // newUserTwoByTwoData.history.push(newRebirth._id);
+    // await newRebirth.save()
     await newUserTwoByTwoData.save();
 
     res.status(201).json({ success: true, message: "All users added successfully." });
@@ -138,7 +138,7 @@ router.post('/add-package/:id', async (req, res) => {
       throw new Error(`All fields are required for clientId: ${clientId || 'Unknown'}`);
     }
     const user = await UserModel.findById(req.params.id);
-    const newPurchase = new PurchaseModel({ amount, packageName, clientId:user._id });
+    const newPurchase = new PurchaseModel({ amount, packageName, clientId: user._id });
     user.invastment += Number(amount);
     user.is_active = true;
     if(!user.active_date){
@@ -186,27 +186,27 @@ router.post('/add-user/two-by-eight', async (req, res) => {
       packageTwoByEight = new PackageTwoByEightModel({ amount: 25 });
       await packageTwoByEight.save();
     }
-    const newUserTwoByEightData = new UserTwoByEightModel({ userId, username: userName, investment: purchaseAmount, activationFees: activationFee, netRewardFees: totalNetReward, rebirthFees: rebirthFee, upgrationFees: upgradationFee,currentTierCount:1 });
+    const newUserTwoByEightData = new UserTwoByEightModel({ userId, username: userName, investment: purchaseAmount, activationFees: activationFee, netRewardFees: 1.5, rebirthFees: 1, upgrationFees: 2.5, currentTierCount: 1 });
 
     const finalEnterEightUser = await FinalEnterTwoByEightModel.findOne({ userId });
     if (!finalEnterEightUser) {
-      const newFinalUser = new FinalEnterTwoByEightModel({ userId: userId, username: userName, investment: purchaseAmount, activationFees: activationFee, upgrationFees: upgradationFee, rebirthFees: rebirthFee, restrebirthFees: rebirthFee, netRewardFees: totalNetReward, currentTierCount: 1 });
+      const newFinalUser = new FinalEnterTwoByEightModel({ userId: userId, username: userName, investment: purchaseAmount, activationFees: activationFee, upgrationFees: 0, rebirthFees: 0, restrebirthFees: 0, netRewardFees: 0, currentTierCount: 1 });
       await newFinalUser.save();
     } else {
-      finalEnterEightUser.netRewardFees += totalNetReward;
       finalEnterEightUser.activationFees += activationFee;
-      finalEnterEightUser.rebirthFees += rebirthFee;
-      finalEnterEightUser.restrebirthFees += rebirthFee;
-      finalEnterEightUser.upgrationFees += upgradationFee;
+      finalEnterEightUser.netRewardFees += 0;
+      finalEnterEightUser.rebirthFees += 0;
+      finalEnterEightUser.restrebirthFees += 0;
+      finalEnterEightUser.upgrationFees += 0;
       await finalEnterEightUser.save();
     }
     if (packageTwoByEight) {
       packageTwoByEight.tier1.push(newUserTwoByEightData);
       await packageTwoByEight.save();
     }
-    const newRebirth = new RebirthTwoByEightModel({ clientId: newUserTwoByEightData._id, activationFees: newUserTwoByEightData.activationFees, currentTierCount: 1, investment: newUserTwoByEightData.investment, netRewardFees: newUserTwoByEightData.netRewardFees, rebirthAuto: newUserTwoByEightData.rebirthAuto, rebirthFees: newUserTwoByEightData.rebirthFees, upgrationFees: newUserTwoByEightData.upgrationFees })
-    newUserTwoByEightData.history.push(newRebirth._id);
-    await newRebirth.save()
+    // const newRebirth = new RebirthTwoByEightModel({ clientId: newUserTwoByEightData._id, activationFees: newUserTwoByEightData.activationFees, currentTierCount: 1, investment: newUserTwoByEightData.investment, netRewardFees: newUserTwoByEightData.netRewardFees, rebirthAuto: newUserTwoByEightData.rebirthAuto, rebirthFees: newUserTwoByEightData.rebirthFees, upgrationFees: newUserTwoByEightData.upgrationFees })
+    // newUserTwoByEightData.history.push(newRebirth._id);
+    // await newRebirth.save()
     await newUserTwoByEightData.save();
     res.status(201).json({ success: true, message: "All users added successfully." });
   } catch (err) {
@@ -257,7 +257,6 @@ router.post('/add-user-binary', async (req, res) => {
       upgrationFees: upgradationFee
     });
 
-    // Update or create final entry for two-by-two
     const finalEnterTwoUser = await FinalEnterTwoByTwoModel.findOne({ userId });
     if (!finalEnterTwoUser) {
       const newFinalUser = new FinalEnterTwoByTwoModel({
@@ -323,16 +322,52 @@ router.post('/add-user-binary', async (req, res) => {
 });
 
 
-router.get('/users/two-by-two', async (req, res) => {
+
+// ------------- USERS REPORTS  TWO - EIGHT START ---------------------------
+router.get('/admin/two-by-two-reports', async (req, res) => {
   try {
-    const users = await UserTwoByTwoModel.find();
-    const totalActivationFees = users.reduce((total, user) => total + user.activationFees, 0);
-    res.status(200).json({ success: true, users, totalActivationFees });
+    const users = await UserTwoByTwoModel.find({ rebirthAuto: { $ne: 'Auto' } },{currentTierHistory:0,history:0,slothistory:0,leftChild:0,rightChild:0});
+    res.status(200).json({ success: true, data:users,message:"Two By Two users" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, error: error.message });
   }
-})
+});
+router.get('/admin/rebirth/two-by-two-reports', async (req, res) => {
+  try {
+    const users = await UserTwoByTwoModel.find({ rebirthAuto: { $ne: null }},{currentTierHistory:0,history:0,slothistory:0,leftChild:0,rightChild:0});
+    res.status(200).json({ success: true, data:users,message:"Two By Two users Rebirth"  });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/admin/two-by-eight-reports', async (req, res) => {
+  try {
+    const users = await UserTwoByEightModel.find({ rebirthAuto: { $ne: 'Auto' } },{currentTierHistory:0,history:0,slothistory:0,leftChild:0,rightChild:0});
+    res.status(200).json({ success: true, data:users,message:"Two By Eight users" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+router.get('/admin/rebirth/two-by-eight-reports', async (req, res) => {
+  try {
+    const users = await UserTwoByEightModel.find({ rebirthAuto: { $ne: null } },{currentTierHistory:0,history:0,slothistory:0,leftChild:0,rightChild:0});
+    res.status(200).json({ success: true, data:users,message:"Two By Eight users Rebirth"  });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+// ------------- USERS REPORTS  TWO - EIGHT START ---------------------------
+
+
+
+
+
+
 
 router.get('/users/two-by-two/:id', async (req, res) => {
   try {
@@ -361,20 +396,20 @@ router.get('/users/two-by-two/summary/:id', async (req, res) => {
     const totalUpgrationFeesAuto = usersNotRebirthAuto.reduce((total, user) => total + user.upgrationFees, 0);
     const totalInvestmentAuto = usersNotRebirthAuto.reduce((total, user) => total + user.investment, 0);
 
-    res.status(200).json({ 
-      success: true, 
-      users:{
-        totalActivation, 
-        totalRebirth, 
-        totalNetReward, 
-        totalUpgrationFees, 
+    res.status(200).json({
+      success: true,
+      users: {
+        totalActivation,
+        totalRebirth,
+        totalNetReward,
+        totalUpgrationFees,
         totalInvestment
       },
-      usersAuto:{
-        totalActivationAuto, 
-        totalRebirthAuto, 
-        totalNetRewardAuto, 
-        totalUpgrationFeesAuto, 
+      usersAuto: {
+        totalActivationAuto,
+        totalRebirthAuto,
+        totalNetRewardAuto,
+        totalUpgrationFeesAuto,
         totalInvestmentAuto
       },
     });
@@ -392,7 +427,7 @@ router.get('/users/two-by-eight/summary/:id', async (req, res) => {
     const totalNetReward = usersNotRebirth.reduce((total, user) => total + user.netRewardFees, 0);
     const totalUpgrationFees = usersNotRebirth.reduce((total, user) => total + user.upgrationFees, 0);
     const totalInvestment = usersNotRebirth.reduce((total, user) => total + user.investment, 0);
-    
+
     const usersNotRebirthAuto = await UserTwoByEightModel.find({ userId: req.params.id, rebirthAuto: { $ne: null } });
     const totalActivationAuto = usersNotRebirthAuto.reduce((total, user) => total + user.activationFees, 0);
     const totalRebirthAuto = usersNotRebirthAuto.reduce((total, user) => total + user.rebirthFees, 0);
@@ -400,20 +435,20 @@ router.get('/users/two-by-eight/summary/:id', async (req, res) => {
     const totalUpgrationFeesAuto = usersNotRebirthAuto.reduce((total, user) => total + user.upgrationFees, 0);
     const totalInvestmentAuto = usersNotRebirthAuto.reduce((total, user) => total + user.investment, 0);
 
-    res.status(200).json({ 
-      success: true, 
-      users:{
-        totalActivation, 
-        totalRebirth, 
-        totalNetReward, 
-        totalUpgrationFees, 
+    res.status(200).json({
+      success: true,
+      users: {
+        totalActivation,
+        totalRebirth,
+        totalNetReward,
+        totalUpgrationFees,
         totalInvestment
       },
-      usersAuto:{
-        totalActivationAuto, 
-        totalRebirthAuto, 
-        totalNetRewardAuto, 
-        totalUpgrationFeesAuto, 
+      usersAuto: {
+        totalActivationAuto,
+        totalRebirthAuto,
+        totalNetRewardAuto,
+        totalUpgrationFeesAuto,
         totalInvestmentAuto
       },
     });
@@ -425,121 +460,12 @@ router.get('/users/two-by-eight/summary/:id', async (req, res) => {
 // ---------------- CLIENT SIDE END ----------------------------
 
 
-// ---------------- ADMIN SIDE START ----------------------------
-router.get('/admin/two-by-two/summary', async (req, res) => {
-  try {
-    const finalUsers = await FinalEnterTwoByTwoModel.find();
-    let result = []
-    for (const finalUser of finalUsers) {
-      const usersNotRebirth = await UserTwoByTwoModel.find({userId:finalUser.userId, rebirthAuto: { $ne: 'Auto' } }).select('-currentTierHistory -history -slothistory -parentId -leftChild -rightChild -currentTierType');
-      const totalActivation = usersNotRebirth.reduce((total, user) => total + user.activationFees, 0);
-      const totalRebirthFees = usersNotRebirth.reduce((total, user) => total + user.rebirthFees, 0);
-      const totalNetReward = usersNotRebirth.reduce((total, user) => total + user.netRewardFees, 0);
-      const totalUpgrationFees = usersNotRebirth.reduce((total, user) => total + user.upgrationFees, 0);
-      const totalInvestment = usersNotRebirth.reduce((total, user) => total + user.investment, 0);
-  
-      const usersRebirthAuto = await UserTwoByTwoModel.find({userId:finalUser.userId, rebirthAuto: { $ne: null } }).select('-currentTierHistory -history -slothistory -parentId -leftChild -rightChild -currentTierType');
-      const totalActivationAuto = usersRebirthAuto.reduce((total, user) => total + user.activationFees, 0);
-      const totalRebirthFeesAuto = usersRebirthAuto.reduce((total, user) => total + user.rebirthFees, 0);
-      const totalNetRewardAuto = usersRebirthAuto.reduce((total, user) => total + user.netRewardFees, 0);
-      const totalUpgrationFeesAuto = usersRebirthAuto.reduce((total, user) => total + user.upgrationFees, 0);
-      const totalInvestmentAuto = usersRebirthAuto.reduce((total, user) => total + user.investment, 0);
-      const data = {
-        userId:finalUser.userId,
-        username:finalUser.username,
-        investment:finalUser.investment,
-        countNotRebirth:{
-        totalActivation, 
-        totalRebirthFees, 
-        totalNetReward, 
-        totalUpgrationFees, 
-        totalInvestment,
-        totalRebirth:usersNotRebirth
-      },
-      countRebirth:{
-          totalActivationAuto, 
-          totalRebirthFeesAuto, 
-          totalNetRewardAuto, 
-          totalUpgrationFeesAuto, 
-          totalInvestmentAuto,
-          totalRebirth:usersRebirthAuto
-        },}
-      
-        result.push(data);
-    }
-
-    res.status(200).json({ 
-      success: true, 
-      data: result,
-      message:"Two by Two history"
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-router.get('/admin/two-by-eight/summary', async (req, res) => {
-  try {
-    const finalUsers = await FinalEnterTwoByEightModel.find();
-    let result = []
-    for (const finalUser of finalUsers) {
-      const usersNotRebirth = await UserTwoByEightModel.find({userId:finalUser.userId, rebirthAuto: { $ne: 'Auto' } }).select('-currentTierHistory -history -slothistory -parentId -leftChild -rightChild -currentTierType');
-      const totalActivation = usersNotRebirth.reduce((total, user) => total + user.activationFees, 0);
-      const totalRebirthFees = usersNotRebirth.reduce((total, user) => total + user.rebirthFees, 0);
-      const totalNetReward = usersNotRebirth.reduce((total, user) => total + user.netRewardFees, 0);
-      const totalUpgrationFees = usersNotRebirth.reduce((total, user) => total + user.upgrationFees, 0);
-      const totalInvestment = usersNotRebirth.reduce((total, user) => total + user.investment, 0);
-  
-      const usersRebirthAuto = await UserTwoByEightModel.find({userId:finalUser.userId, rebirthAuto: { $ne: null } }).select('-currentTierHistory -history -slothistory -parentId -leftChild -rightChild -currentTierType ');
-      const totalActivationAuto = usersRebirthAuto.reduce((total, user) => total + user.activationFees, 0);
-      const totalRebirthFeesAuto = usersRebirthAuto.reduce((total, user) => total + user.rebirthFees, 0);
-      const totalNetRewardAuto = usersRebirthAuto.reduce((total, user) => total + user.netRewardFees, 0);
-      const totalUpgrationFeesAuto = usersRebirthAuto.reduce((total, user) => total + user.upgrationFees, 0);
-      const totalInvestmentAuto = usersRebirthAuto.reduce((total, user) => total + user.investment, 0);
-      const data = {
-        userId:finalUser.userId,
-        username:finalUser.username,
-        investment:finalUser.investment,
-        countNotRebirth:{
-        totalActivation, 
-        totalRebirthFees, 
-        totalNetReward, 
-        totalUpgrationFees, 
-        totalInvestment,
-        totalRebirth:usersNotRebirth
-      },
-      countRebirth:{
-          totalActivationAuto, 
-          totalRebirthFeesAuto, 
-          totalNetRewardAuto, 
-          totalUpgrationFeesAuto, 
-          totalInvestmentAuto,
-          totalRebirth:usersRebirthAuto
-        },}
-      
-        result.push(data);
-    }
-
-    res.status(200).json({ 
-      success: true, 
-      data: result,
-      message:"Two by Two history"
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-
-// ---------------- ADMIN SIDE END ----------------------------
-
 
 router.get('/users/final-user/:id', async (req, res) => {
   try {
-    const finalTwoUser = await FinalEnterTwoByTwoModel.findOne({ userId: req.params.id});
-    const finalEightUser = await FinalEnterTwoByEightModel.findOne({ userId: req.params.id});
-    res.status(201).json({ success: true, data:{finalTwoUser,finalEightUser} });
+    const finalTwoUser = await FinalEnterTwoByTwoModel.findOne({ userId: req.params.id });
+    const finalEightUser = await FinalEnterTwoByEightModel.findOne({ userId: req.params.id });
+    res.status(201).json({ success: true, data: { finalTwoUser, finalEightUser } });
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, error: error.message });
@@ -567,7 +493,7 @@ router.get('/users/rebirth-history/two-by-two/:id', async (req, res) => {
   }
 })
 
-router.get('/users/two-by-eight', async (req, res) => {
+router.get('/admin/two-by-eight-reports', async (req, res) => {
   try {
     const users = await UserTwoByEightModel.find();
     const totalActivationFees = users.reduce((total, user) => total + user.activationFees, 0);
@@ -577,6 +503,92 @@ router.get('/users/two-by-eight', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 })
+
+router.get('/admin/total-count-reports', async (req, res) => {
+  try {
+    const usersTwo = await FinalEnterTwoByTwoModel.find();
+    const totalActivationTwoFees = usersTwo.reduce((total, user) => total + user.activationFees, 0);
+    const totalRebirthTwoFees = usersTwo.reduce((total, user) => total + user.rebirthFees, 0);
+    const totalUpgrationTwoFees = usersTwo.reduce((total, user) => total + user.upgrationFees, 0);
+    const totalNetRewardTwoFees = usersTwo.reduce((total, user) => total + user.netRewardFees, 0);
+    const totalRestrebirthTwoFees = usersTwo.reduce((total, user) => total + user.restrebirthFees, 0);
+
+    const usersEight = await FinalEnterTwoByEightModel.find();
+    const totalActivationEightFees = usersEight.reduce((total, user) => total + user.activationFees, 0);
+    const totalRebirthEightFees = usersEight.reduce((total, user) => total + user.rebirthFees, 0);
+    const totalUpgrationEightFees = usersEight.reduce((total, user) => total + user.upgrationFees, 0);
+    const totalNetRewardEightFees = usersEight.reduce((total, user) => total + user.netRewardFees, 0);
+    const totalRestrebirthEightFees = usersEight.reduce((total, user) => total + user.restrebirthFees, 0);
+    
+    
+    const levels = await LevelModel.find({},{amount:1});
+    const totalLeaderBoardIncome = levels.reduce((total, user) => total + user.amount, 0);
+
+    const matchingIncome = await TeamIncomeModel.find({},{amount:1});
+    const totalMatchingIncome = matchingIncome.reduce((total, user) => total + user.amount, 0);
+
+    const usersTwoRebirth = await UserTwoByTwoModel.find({ userId: req.params.id, rebirthAuto: { $ne: null } });
+    const totalRebithTwoRebirth = usersTwoRebirth.reduce((total, user) => total + user.rebirthFees, 0);
+    const totalRebithTwoReward = usersTwoRebirth.reduce((total, user) => total + user.netRewardFees, 0);
+    const totalRebirthTwoUpgrade = usersTwoRebirth.reduce((total, user) => total + user.upgrationFees, 0);
+
+    const usersEightRebirth = await UserTwoByEightModel.find({ userId: req.params.id, rebirthAuto: { $ne: null } });
+    const totalRebithEightRebirth = usersEightRebirth.reduce((total, user) => total + user.rebirthFees, 0);
+    const totalRebithEightReward = usersEightRebirth.reduce((total, user) => total + user.netRewardFees, 0);
+    const totalRebirthEightUpgrade = usersEightRebirth.reduce((total, user) => total + user.upgrationFees, 0);
+    
+
+    
+    const totalIncome = totalActivationTwoFees + totalRebirthTwoFees + totalUpgrationTwoFees + totalNetRewardTwoFees + totalActivationEightFees + totalRebirthEightFees + totalUpgrationEightFees + totalNetRewardEightFees
+    
+
+    const data = {
+      twoByTwo:{
+        totalActivation:totalActivationTwoFees,
+        totalUpgration:totalUpgrationTwoFees,
+        totalNetReward:totalNetRewardTwoFees,
+        totalRebirth:totalRebithTwoRebirth,
+        // totalRebirth:totalRebirthTwoFees,
+        totalRestrebirth:totalRestrebirthTwoFees,
+        rebirthD:{
+          rebirth:totalRebithTwoRebirth,
+          reward:totalRebithTwoReward,
+          upgrade:totalRebirthTwoUpgrade,
+          count:usersTwoRebirth.length,
+          totalRestrebirth:totalRestrebirthTwoFees,
+        }
+      },
+      twoByEight:{
+        totalActivation:totalActivationEightFees,
+        totalUpgration:totalUpgrationEightFees,
+        totalNetReward:totalNetRewardEightFees,
+        totalRebirth:totalRebithEightRebirth,
+        // totalRebirth:totalRebirthEightFees,
+        totalRestrebirth:totalRestrebirthEightFees,
+        rebirthD:{
+          rebirth:totalRebithEightRebirth,
+          reward:totalRebithEightReward,
+          upgrade:totalRebirthEightUpgrade,
+          count:usersEightRebirth.length,
+          totalRestrebirth:totalRestrebirthEightFees,
+        }
+      },
+      totalLeaderBoardIncome,
+      totalMatchingIncome,
+      totalIncome
+    }
+
+    
+
+
+
+    res.status(200).json({ success: true, data, message:"Admin Total Count" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+})
+
 
 router.get('/users/two-by-eight/:id', async (req, res) => {
   try {
@@ -609,11 +621,15 @@ router.get('/users/rebirth-history/two-by-eight/:id', async (req, res) => {
   }
 })
 
-router.get('/final-users/two-by-two', async (req, res) => {
+router.get('/admin/final-users/two-by-two', async (req, res) => {
   try {
     const users = await FinalEnterTwoByTwoModel.find();
     const totalActivationFees = users.reduce((total, user) => total + user.activationFees, 0);
-    res.status(200).json({ success: true, users, totalActivationFees });
+    const totalNetRewardFees = users.reduce((total, user) => total + user.netRewardFees, 0);
+    const totalRebirthFees = users.reduce((total, user) => total + user.rebirthFees, 0);
+    const totalRestrebirthFees = users.reduce((total, user) => total + user.restrebirthFees, 0);
+    const totalUpgrationFees = users.reduce((total, user) => total + user.upgrationFees, 0);
+    res.status(200).json({ success: true, users,message:'Final-Two-By-Two', total:{totalActivationFees,totalNetRewardFees,totalRebirthFees,totalRestrebirthFees,totalUpgrationFees} });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: error.message });
@@ -630,16 +646,20 @@ router.get('/final-users/two-by-two/:id', async (req, res) => {
   }
 })
 
-router.get('/final-users/two-by-eight', async (req, res) => {
+router.get('/admin/final-users/two-by-eight', async (req, res) => {
   try {
     const users = await FinalEnterTwoByEightModel.find();
     const totalActivationFees = users.reduce((total, user) => total + user.activationFees, 0);
-    res.json({ users, totalActivationFees });
+    const totalNetRewardFees = users.reduce((total, user) => total + user.netRewardFees, 0);
+    const totalRebirthFees = users.reduce((total, user) => total + user.rebirthFees, 0);
+    const totalRestrebirthFees = users.reduce((total, user) => total + user.restrebirthFees, 0);
+    const totalUpgrationFees = users.reduce((total, user) => total + user.upgrationFees, 0);
+    res.status(200).json({ success: true, users,message:'Final-Two-By-Eight', total:{totalActivationFees,totalNetRewardFees,totalRebirthFees,totalRestrebirthFees,totalUpgrationFees} });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: error.message });
   }
-})
+});
 
 router.get('/final-users/two-by-eight/:id', async (req, res) => {
   try {
@@ -649,7 +669,67 @@ router.get('/final-users/two-by-eight/:id', async (req, res) => {
     console.log(error);
     res.status(500).json({ error: error.message });
   }
+});
+router.get('/user/total-count-reports/:id/:nodeId', async (req, res) => {
+  try {
+    // TWO BY EIGHT START --------------------------
+    const usersEight = await FinalEnterTwoByEightModel.findOne({ userId: req.params.id });
+    const userTwoByEight = await UserTwoByEightModel.find({ userId: req.params.id, rebirthAuto: { $ne: 'Auto' } });
+    const rebirthTwoByEightAuto = await UserTwoByEightModel.find({ userId: req.params.id, rebirthAuto: { $ne: null } });
+    const totalUpgrationFeesAutoEight = rebirthTwoByEightAuto.reduce((total, user) => total + user.upgrationFees, 0);
+    const totalRebirthAutoEight = rebirthTwoByEightAuto.reduce((total, user) => total + user.rebirthFees, 0);
+
+    // TWO BY EIGHT EIGHT --------------------------
+    const usersTwo = await FinalEnterTwoByTwoModel.findOne({ userId: req.params.id });
+    const userTwoByTwo = await UserTwoByTwoModel.find({ userId: req.params.id, rebirthAuto: { $ne: 'Auto' } })
+    const rebirthTwoByTwoAuto = await UserTwoByTwoModel.find({ userId: req.params.id, rebirthAuto: { $ne: null } });
+    const totalUpgrationFeesAutoTwo = rebirthTwoByTwoAuto.reduce((total, user) => total + user.upgrationFees, 0);
+    const totalRebirthAutoTwo = rebirthTwoByTwoAuto.reduce((total, user) => total + user.rebirthFees, 0);
+    const mainUser = await UserModel.findById(req.params.nodeId);
+
+    const data = {
+      twoByEight: {
+        upgradeFees: usersEight ? usersEight?.upgrationFees : 0 ,
+        rebirthFees: rebirthTwoByEightAuto ? totalRebirthAutoEight : 0,
+        // rebirthFees: usersEight ? usersEight?.rebirthFees : 0,
+        netRewardFees: usersEight ? usersEight?.netRewardFees : 0,
+        activationFee:usersEight ? usersEight?.activationFees : 0 ,
+        twoByTwoCount:userTwoByEight ? userTwoByEight?.length : 0 ,
+        setMatchReward: mainUser ? mainUser?.teamsIncome?.income : 0,
+        teamleadrshipreward:mainUser?.levelIncome?.income,
+        restDivident: {
+          restRebirthFees: usersEight ? usersEight?.restrebirthFees : 0,
+          restRebirthCount: rebirthTwoByEightAuto ? rebirthTwoByEightAuto?.length : 0,
+          upgradeFees: totalUpgrationFeesAutoEight ? totalUpgrationFeesAutoEight : 0
+        },
+      },
+      twoByTwo: {
+        upgradeFees: usersTwo ? usersTwo?.upgrationFees : 0,
+        rebirthFees: rebirthTwoByTwoAuto ? totalRebirthAutoTwo : 0,
+        // rebirthFees: usersTwo ? usersTwo?.rebirthFees : 0,
+        netRewardFees: usersTwo ? usersTwo?.netRewardFees : 0,
+        activationFee: usersTwo ? usersTwo?.activationFees : 0,
+        twoByTwoCount: userTwoByTwo ? userTwoByTwo?.length : 0,
+        setMatchReward: mainUser ? mainUser?.teamsIncome?.income : 0,
+        teamleadrshipreward:mainUser?.levelIncome?.income,
+        restDivident: {
+          restRebirthFees: usersTwo ? usersTwo?.restrebirthFees : 0 ,
+          restRebirthCount: rebirthTwoByTwoAuto ? rebirthTwoByTwoAuto?.length : 0,
+          upgradeFees: totalUpgrationFeesAutoTwo ? totalUpgrationFeesAutoTwo : 0
+        },
+      },
+    }
+    res.status(200).json({ success: true, data, message: 'Total count reports' });
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ success: false, message: error.message });
+  }
 })
+
+
+
+
+
 
 
 //----------------------------------------- SLOT CREATE AND TIER START ----------------------------------------
@@ -752,24 +832,67 @@ router.get('/user/divide-package-two-by-eight/:id', async (req, res) => {
 // ------------------- level incomes start ------------------------------------------
 router.get('/user/level-income-history/:id', async (req, res) => {
   try {
-    const user = await UserModel.findById(req.params.id,{_id:1,email:1,name:1});
-    const level = await LevelModel.find({userId:user._id})
-    res.status(200).json({success:true, data: level,message:"Level Income" });
+    const user = await UserModel.findById(req.params.id, { _id: 1, email: 1, name: 1 });
+    const level = await LevelModel.find({ userId: user._id })
+    res.status(200).json({ success: true, data: level, message: "Level Income" });
   } catch (error) {
     console.log(error);
-    res.status(500).json({success:false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 })
 
-router.get('/admin/level-income-history', async (req, res) => {
+router.get('/admin/leaderboard-income-history', async (req, res) => {
   try {
-    const level = await LevelModel.find({}).populate({path:'userId',select:"name email wallet_address invastment"});
-    res.status(200).json({success:true, data: level,message:"Level Admin Side Income" });
+    const level = await LevelModel.find({}).populate({ path: 'userId', select: "name email wallet_address invastment" });
+    res.status(200).json({ success: true, data: level, message: "Level Admin Side Income" });
   } catch (error) {
-    res.status(500).json({success:false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 })
 // ------------------- level incomes End ------------------------------------------
+
+
+router.get('/user/set-matching-tree/:id', async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.params.id);
+    res.status(200).json({ success:true,message:"Matching Users Data",data:user?.teams });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+});
+router.get('/admin/set-matching-tree-users-reports', async (req, res) => {
+  try {
+    const users = await UserModel.find();
+    let allSetMatchingUsers = [];
+    for (const user of users) {
+      allSetMatchingUsers = user?.teams.length ? [...user?.teams] : [];
+    }
+    res.status(200).json({ success:true,message:"Matching users admin Data",data:allSetMatchingUsers });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+});
+router.get('/user/set-leaderboard/income-reports/:id', async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.params.id);
+    const history = await TeamIncomeModel.find({_id:user?.teamsIncome?.history});
+    res.status(200).json({ success:true,message:"leaderboard Income Data",data:history });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+});
+router.get('/admin/set-matching/income-reports', async (req, res) => {
+  try {
+    const history = await TeamIncomeModel.find({}).populate({path:'client',select:'name email wallet_address number'});
+    res.status(200).json({ success:true,message:"admin Leaderboard Income Data",data:history });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 
 

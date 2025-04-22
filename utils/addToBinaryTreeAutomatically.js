@@ -1,4 +1,5 @@
 const { UserModel } = require('../models/user.model');
+const { getDownlineUsersBinary } = require('./getDownlineUsersBinary');
 
 // ✅ Find first available parent where user can be added
 const findAvailableParent = async (referred_by) => {
@@ -60,6 +61,56 @@ const getBinaryTreeData = async (userId) => {
   };
 };
 
+const buildTree = async (userId) => {
+  if (!userId) return null;
+
+  const user = await UserModel.findById(userId,{name:1,email:1,invastment:1,referred_by:1,partners:1,is_active:1,joiningMode:1,left_child:1,right_child:1}).lean();
+  if (!user) return null;
+  const { left, right } = await getDownlineUsersBinary(user._id);
+
+  // Recursively fetch left and right children
+  const leftChild = await buildTree(user.left_child);
+  const rightChild = await buildTree(user.right_child);
+
+  // Use aggregation to get business totals
+  const [leftBusinessAgg, rightBusinessAgg] = await Promise.all([
+    UserModel.aggregate([
+      { $match: { _id: { $in: left } } },
+      { $group: { _id: null, total: { $sum: "$invastment" } } }
+    ]),
+    UserModel.aggregate([
+      { $match: { _id: { $in: right } } },
+      { $group: { _id: null, total: { $sum: "$invastment" } } }
+    ])
+  ]);
+
+  const leftTotalBusiness = leftBusinessAgg[0]?.total || 0;
+  const rightTotalBusiness = rightBusinessAgg[0]?.total || 0;
+
+  const carryLeftForward = left.length > right.length ? left.length - right.length : 0;
+  const carryRightForward = right.length > left.length ? right.length - left.length : 0;
+
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    joiningMode: user.joiningMode,
+    sponsorUserId: user.referred_by,
+    is_active: user.is_active,
+    carryLeft: carryLeftForward,
+    carryRight: carryRightForward,
+    leftTotalBusiness,
+    rightTotalBusiness,
+    leftCount: left.length,
+    rightCount: right.length,
+    partnerLength: user.partners.length,
+    investment: user.invastment,
+    left_child: leftChild,
+    right_child: rightChild,
+  };
+};
+
+
 // Calculate Distribution Ratio
 const calculateRatio = (investment) => {
   if (investment >= 1000) return { parent: 2, grandParent: 1 }; // 2:1
@@ -98,4 +149,4 @@ const distributeRewards = async () => {
 
 
 
-module.exports = { addToBinaryTreeAutomatically, getBinaryTreeData };
+module.exports = { addToBinaryTreeAutomatically, getBinaryTreeData, buildTree };

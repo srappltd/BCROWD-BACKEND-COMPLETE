@@ -6,7 +6,8 @@ const { rebirthAutoUserTwoByTwoCreate, rebirthAutoUserTwoByEightCreate } = requi
 // ----- Schedule to run every 6 hours Start Level and Matching Income -----
 let isProcessing1 = false;
 let isProcessing2 = false;
-cron.schedule('*/5 * * * *', async () => {
+// */5 * * * *
+cron.schedule('* * * * * *', async () => {
     if (isProcessing1) return;
     isProcessing1 = true;
     try {
@@ -17,11 +18,13 @@ cron.schedule('*/5 * * * *', async () => {
         isProcessing1 = false;
     }
 });
-cron.schedule('0 */6 * * *', async () => {
+// 0 */6 * * *
+cron.schedule('* * * * * *', async () => {
     if (isProcessing2) return;
     isProcessing2 = true;
     try {
         await updateMatchingTeam();
+        // console.log('fg')
     } catch (error) {
         console.log(error);
     } finally {

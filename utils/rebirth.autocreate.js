@@ -24,11 +24,11 @@ exports.rebirthAutoUserTwoByTwoCreate = async ()=>{
                         currentTierCount: 1
 
                     })
-                    finalEnterUser.netRewardFees += 1.5;
                     finalEnterUser.activationFees += 5;
-                    finalEnterUser.rebirthFees += 1;
-                    finalEnterUser.restrebirthFees += 1;
-                    finalEnterUser.upgrationFees += 2.5;
+                    finalEnterUser.netRewardFees += 0;
+                    finalEnterUser.rebirthFees += 0;
+                    finalEnterUser.restrebirthFees += 0;
+                    finalEnterUser.upgrationFees += 0;
                     
                     // console.log("rebirth user count check", index);
                     const packageTwoByEight = await PackageTwoByTwoModel.findOne();
@@ -47,7 +47,7 @@ exports.rebirthAutoUserTwoByTwoCreate = async ()=>{
             } else {
                 // console.log("no user found for rebirth!");
             }
-            finalEnterUser.restrebirthFees = finalEnterUser.restrebirthFees - (restCount * 5)
+            finalEnterUser.restrebirthFees -= (restCount * 5)
             await finalEnterUser.save();
             await user.save();
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -78,11 +78,11 @@ exports.rebirthAutoUserTwoByEightCreate = async ()=>{
                         rebirthAuto: 'Auto',
                         currentTierCount: 1
                     })
-                    finalEnterUser.netRewardFees += 1.5;
+                    finalEnterUser.netRewardFees += 0;
                     finalEnterUser.activationFees += 5;
-                    finalEnterUser.rebirthFees += 1;
-                    finalEnterUser.restrebirthFees += 1;
-                    finalEnterUser.upgrationFees += 2.5;
+                    finalEnterUser.rebirthFees += 0;
+                    finalEnterUser.restrebirthFees += 0;
+                    finalEnterUser.upgrationFees += 0;
                     // console.log("rebirth user count check", index);
                     const packageTwoByEight = await PackageTwoByEightModel.findOne();
                     if (!packageTwoByEight) {
@@ -99,7 +99,7 @@ exports.rebirthAutoUserTwoByEightCreate = async ()=>{
             } else {
                 // console.log("no user found for rebirth!");
             }
-            finalEnterUser.restrebirthFees = finalEnterUser.restrebirthFees - (restCount * 5)
+            finalEnterUser.restrebirthFees -= (restCount * 5)
             await finalEnterUser.save();
             await user.save();
             await new Promise((resolve) => setTimeout(resolve, 100));
