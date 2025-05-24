@@ -12,24 +12,7 @@ exports.rebirthAutoUserTwoByTwoCreate = async ()=>{
             const restCount = Math.floor(finalEnterUser.restrebirthFees / 5);
             if (restCount > 0) {
                 for (let index = 0; index < restCount; index++) {
-                    const newUserData = new UserTwoByTwoModel({
-                        userId: finalEnterUser.userId,
-                        username: finalEnterUser.username,
-                        investment: finalEnterUser.purchaseAmount,
-                        activationFees: 5,
-                        netRewardFees: 1.5,
-                        rebirthFees: 1,
-                        upgrationFees: 2.5,
-                        rebirthAuto: 'Auto',
-                        currentTierCount: 1
-
-                    })
-                    finalEnterUser.activationFees += 5;
-                    finalEnterUser.netRewardFees += 0;
-                    finalEnterUser.rebirthFees += 0;
-                    finalEnterUser.restrebirthFees += 0;
-                    finalEnterUser.upgrationFees += 0;
-                    
+                    const newUserData = new UserTwoByTwoModel({ userId: finalEnterUser.userId, username: finalEnterUser.username, investment: 25, activationFees: 0, netRewardFees: 0, rebirthFees: 0, upgrationFees: 0, rebirthAuto: 'Auto', currentTierCount: 1 })
                     // console.log("rebirth user count check", index);
                     const packageTwoByEight = await PackageTwoByTwoModel.findOne();
                     // TWO BY TWO LOGIC
@@ -67,22 +50,7 @@ exports.rebirthAutoUserTwoByEightCreate = async ()=>{
             const restCount = Math.floor(finalEnterUser.restrebirthFees / 5);
             if (restCount > 0) {
                 for (let index = 0; index < restCount; index++) {
-                    const newUserData = new UserTwoByEightModel({
-                        userId: finalEnterUser.userId,
-                        username: finalEnterUser.username,
-                        investment: finalEnterUser.purchaseAmount,
-                        activationFees: 5,
-                        netRewardFees: 1.5,
-                        rebirthFees: 1,
-                        upgrationFees: 2.5,
-                        rebirthAuto: 'Auto',
-                        currentTierCount: 1
-                    })
-                    finalEnterUser.netRewardFees += 0;
-                    finalEnterUser.activationFees += 5;
-                    finalEnterUser.rebirthFees += 0;
-                    finalEnterUser.restrebirthFees += 0;
-                    finalEnterUser.upgrationFees += 0;
+                    const newUserData = new UserTwoByEightModel({ userId: finalEnterUser.userId, username: finalEnterUser.username, investment: 25, activationFees: 0, netRewardFees: 0, rebirthFees: 0, upgrationFees: 0, rebirthAuto: 'Auto', currentTierCount: 1 })
                     // console.log("rebirth user count check", index);
                     const packageTwoByEight = await PackageTwoByEightModel.findOne();
                     if (!packageTwoByEight) {

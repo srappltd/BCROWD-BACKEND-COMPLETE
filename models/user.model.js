@@ -25,31 +25,22 @@ const userTwoByTwoSchema = new Schema({
     default: 0
   },
   currentTierHistory: [{
-    tierCount: {
-      type: Number,
-      default: 0
-    },
-    usersCount: {
-      type: Number,
-      default: 0
-    },
-    usersTargetCount: {
-      type: Number,
-      default: 0
-    },
-    status: {
-      type: String,
-      enum: ['ACHIEVED', 'WAITING'],
-      default: 'WAITING'
-    },
-    activationFees: { type: Number, default: 0 },
-    upgrationFees: { type: Number, default: 0 },
-    rebirthFees: { type: Number, default: 0 },
-    netRewardFees: { type: Number, default: 0 },
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "HistoryTwoByTwo",
+    default: []
   }],
-  parentId: { type: mongoose.Schema.Types.ObjectId, ref: 'UserTwoByTwo', default: null },
-  leftChild: { type: mongoose.Schema.Types.ObjectId, ref: 'UserTwoByTwo', default: null },
-  rightChild: { type: mongoose.Schema.Types.ObjectId, ref: 'UserTwoByTwo', default: null },
+  globalAutoTwoByTwo:{
+    usersCheck:[{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "UserTwoByTwo",
+      default: []
+    }],
+    usersAddCheck:[{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "UserTwoByTwo",
+      default: []
+    }],
+  },
   status: { type: String, enum: ['ACHIEVED', 'WAITING'], default: 'WAITING' },
 }, { timestamps: true, versionKey: false });
 exports.UserTwoByTwoModel = mongoose.model('UserTwoByTwo', userTwoByTwoSchema);
@@ -71,33 +62,17 @@ const userTwoByEightSchema = new Schema({
   netRewardFees: { type: Number, default: 0 },
   currentTierCount: { type: Number, default: 0 },
   currentTierType: { type: String, enum: ['PARENT', 'CHILD'], default: 'CHILD' },
-  currentTierHistory: [{
-    tierCount: {
-      type: Number,
-      default: 0
-    },
-    usersCount: {
-      type: Number,
-      default: 0
-    },
-    usersTargetCount: {
-      type: Number,
-      default: 0
-    },
-
-    status: {
-      type: String,
-      enum: ['ACHIEVED', 'WAITING'],
-      default: 'WAITING'
-    },
-    activationFees: { type: Number, default: 0 },
-    upgrationFees: { type: Number, default: 0 },
-    rebirthFees: { type: Number, default: 0 },
-    netRewardFees: { type: Number, default: 0 },
-  }],
   rebirthAuto: { type: String, default: null },
+  matchingPairs: [{ type: mongoose.Schema.Types.ObjectId, ref: "MatchingPair", default: [] }],
+  matchingPair: { type: Number, default: 0 },
+  currentTierHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "HistoryTwoByEight", default: [] }],
+  globalAutoTwoByEight:{
+    usersCheck:[{ type: mongoose.Schema.Types.ObjectId, ref: "UserTwoByTwo", default: [] }],
+    usersAddCheck:[{ type: mongoose.Schema.Types.ObjectId, ref: "UserTwoByTwo", default: [] }],
+  },
   history: [{ type: mongoose.Schema.Types.ObjectId, ref: 'RebirthTwoByEight', default: null }],
   slothistory: [{ type: mongoose.Schema.Types.ObjectId, ref: 'SlothistoryTwoByTwo', default: null }],
+  status: { type: String, enum: ['ACHIEVED', 'WAITING'], default: 'WAITING' },
 }, { timestamps: true, versionKey: false });
 exports.UserTwoByEightModel = mongoose.model('UserTwoByEight', userTwoByEightSchema);
 

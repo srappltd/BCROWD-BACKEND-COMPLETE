@@ -1,82 +1,160 @@
 const { PackageTwoByTwoModel,PackageTwoByEightModel } = require("../models/package.model");
 const { packageTwoByTwoSlotMethod,packageTwoByEightSlotMethod } = require("./package.slotmethod");
 
+
+// Static Tier Data
+const tierDataTwoByTwo = [ 5, 5, 10, 10, 20, 20, 40, 40, 80, 80, 160, 160, 320, 320, 640, 640, 1280, 1280, 2560, 2560, 5120, 5120, 10240, 10240, 20480, 20480, 40960, 40960, 81920, 81920];
+
+// Reward Mapping Function
+const getRewardMapTwoByTwo = async () => {
+  const rewardMap = {};
+  for (let i = 0; i < 30; i++) {
+    const activationFee = tierDataTwoByTwo[i];
+    const up = activationFee * 0.5;
+    const net = activationFee * 0.3;
+    const rebirth = activationFee * 0.2;
+    rewardMap[i + 1] = { up, rebirth, net };
+  }
+  return rewardMap;
+};
+
+// Slot Handling Function
 const twoByTwoHandSlot = async () => {
-    try {
-        const package = await PackageTwoByTwoModel.findOne({amount:25});
-        if(!package) return
-        await packageTwoByTwoSlotMethod({ tier1: package.tier1, tier2: package.tier2, count: 3, doubleAmount: 1, dataInsert:true, currentTier: 2 })
-        await packageTwoByTwoSlotMethod({ tier1: package.tier2, tier2: package.tier3, count: 5, doubleAmount: 2, dataInsert:false, currentTier: 3 })
+  try {
+    const rewardMap = await getRewardMapTwoByTwo();
 
-        await packageTwoByTwoSlotMethod({ tier1: package.tier3, tier2: package.tier4, count: 3, doubleAmount: 1, dataInsert:false, currentTier: 4 })
-        await packageTwoByTwoSlotMethod({ tier1: package.tier4, tier2: package.tier5, count: 5, doubleAmount: 2, dataInsert:false, currentTier: 5 })
+    const package = await PackageTwoByTwoModel.findOne({ amount: 25 });
+    if (!package) return;
 
-        await packageTwoByTwoSlotMethod({ tier1: package.tier5, tier2: package.tier6, count: 3, doubleAmount: 1, dataInsert:false, currentTier: 6 })
-        await packageTwoByTwoSlotMethod({ tier1: package.tier6, tier2: package.tier7, count: 5, doubleAmount: 2, dataInsert:false, currentTier: 7 })
+    const tierConfigs = [{ count: 3, doubleAmount: 1 }, { count: 5, doubleAmount: 2 }];
+    const totalTiers = 30;
+    let currentTier = 1;
 
-        await packageTwoByTwoSlotMethod({ tier1: package.tier7, tier2: package.tier8, count: 3, doubleAmount: 1, dataInsert:false, currentTier: 8 })
-        await packageTwoByTwoSlotMethod({ tier1: package.tier8, tier2: package.tier9, count: 5, doubleAmount: 2, dataInsert:false, currentTier: 9 })
+    for (let i = 1; i <= totalTiers; i++) {
+      const tier1 = package[`tier${i}`];
+      const tier2 = package[`tier${i + 1}`];
 
-        await packageTwoByTwoSlotMethod({ tier1: package.tier9, tier2: package.tier10, count: 3, doubleAmount: 2, dataInsert:false, currentTier: 9 })
-        await packageTwoByTwoSlotMethod({ tier1: package.tier10, tier2: package.tier11, count: 5, doubleAmount: 1, dataInsert:false, currentTier: 10 })
+      if (!tier1 || !tier2) break;
 
-        await packageTwoByTwoSlotMethod({ tier1: package.tier11, tier2: package.tier12, count: 3, doubleAmount: 2, dataInsert:false, currentTier: 11 })
-        await packageTwoByTwoSlotMethod({ tier1: package.tier12, tier2: package.tier13, count: 5, doubleAmount: 1, dataInsert:false, currentTier: 12 })
+      const config = tierConfigs[(i - 1) % 2];
+      const rewards = rewardMap[currentTier] || { up: 0, rebirth: 0, net: 0 };
 
-        await packageTwoByTwoSlotMethod({ tier1: package.tier13, tier2: package.tier14, count: 3, doubleAmount: 2, dataInsert:false, currentTier: 13 })
-        await packageTwoByTwoSlotMethod({ tier1: package.tier14, tier2: package.tier15, count: 5, doubleAmount: 1, dataInsert:false, currentTier: 14 })
-
-        await packageTwoByTwoSlotMethod({ tier1: package.tier15, tier2: package.tier16, count: 3, doubleAmount: 2, dataInsert:false, currentTier: 15 })
-        await packageTwoByTwoSlotMethod({ tier1: package.tier16, tier2: package.tier17, count: 5, doubleAmount: 1, dataInsert:false, currentTier: 16 })
-
-        await packageTwoByTwoSlotMethod({ tier1: package.tier17, tier2: package.tier18, count: 3, doubleAmount: 2, dataInsert:false, currentTier: 17 })
-        await packageTwoByTwoSlotMethod({ tier1: package.tier18, tier2: package.tier19, count: 5, doubleAmount: 1, dataInsert:false, currentTier: 18 })
-
-        await packageTwoByTwoSlotMethod({ tier1: package.tier19, tier2: package.tier20, count: 3, doubleAmount: 2, dataInsert:false, currentTier: 19 })
-        await packageTwoByTwoSlotMethod({ tier1: package.tier20, tier2: package.tier21, count: 5, doubleAmount: 1, dataInsert:false, currentTier: 20 })
-
-        await packageTwoByTwoSlotMethod({ tier1: package.tier21, tier2: package.tier22, count: 3, doubleAmount: 2, dataInsert:false, currentTier: 21 })
-        await packageTwoByTwoSlotMethod({ tier1: package.tier22, tier2: package.tier23, count: 5, doubleAmount: 1, dataInsert:false, currentTier: 22 })
-
-        await packageTwoByTwoSlotMethod({ tier1: package.tier23, tier2: package.tier24, count: 3, doubleAmount: 2, dataInsert:false, currentTier: 23 })
-        await packageTwoByTwoSlotMethod({ tier1: package.tier24, tier2: package.tier25, count: 5, doubleAmount: 1, dataInsert:false, currentTier: 24 })
-
-        await packageTwoByTwoSlotMethod({ tier1: package.tier25, tier2: package.tier26, count: 3, doubleAmount: 2, dataInsert:false, currentTier: 25 })
-        await packageTwoByTwoSlotMethod({ tier1: package.tier26, tier2: package.tier27, count: 5, doubleAmount: 1, dataInsert:false, currentTier: 26 })
-
-        await packageTwoByTwoSlotMethod({ tier1: package.tier27, tier2: package.tier28, count: 3, doubleAmount: 2, dataInsert:false, currentTier: 17 })
-        await packageTwoByTwoSlotMethod({ tier1: package.tier28, tier2: package.tier29, count: 5, doubleAmount: 1, dataInsert:false, currentTier: 28 })
-
-        await packageTwoByTwoSlotMethod({ tier1: package.tier29, tier2: package.tier30, count: 3, doubleAmount: 2, dataInsert:false, currentTier: 29 })
-        await packageTwoByTwoSlotMethod({ tier1: package.tier30, tier2: package.completedUser, count: 5, doubleAmount: 1, dataInsert:false, currentTier: 30 })
-        await package.save();
-    } catch (err) {
-        console.log(err.message);
+      await packageTwoByTwoSlotMethod({
+        tier1: tier1,
+        tier2: tier2,
+        count: config.count,
+        doubleAmount: config.doubleAmount,
+        dataInsert: i === 1,
+        currentTier: currentTier,
+        up: rewards.up,
+        rebirth: rewards.rebirth,
+        net: rewards.net
+      });
+      currentTier++;
     }
-}
+
+    // Final Tier to CompletedUser
+    const finalTier = package[`tier${totalTiers}`];
+    if (finalTier && package.completedUser) {
+      const config = tierConfigs[(totalTiers -1 ) % 2];
+      const rewards = rewardMap[currentTier] || { up: 0, rebirth: 0, net: 0 };
+
+      // Add next tier activation fee (if available) to net
+      const nextTierFee = tierDataTwoByTwo[totalTiers] || 0;
+      rewards.net += nextTierFee;
+
+      await packageTwoByTwoSlotMethod({
+        tier1: finalTier,
+        tier2: package.completedUser,
+        count: config.count,
+        doubleAmount: config.doubleAmount,
+        dataInsert: false,
+        currentTier: currentTier,
+        up: 0,
+        rebirth: rewards.rebirth,
+        net: rewards.net + rewards.up
+      });
+    }
+
+    await package.save();
+  } catch (err) {
+    console.log("Error in twoByTwoHandSlot:", err.message);
+  }
+};
+
+
+// Tier Activation Fees for TwoByEight
+const tierDataTwoByEight = [5, 5, 10, 40, 320, 5120, 163840, 10485760];
+
+// Reward Mapping Function
+const getRewardMapTwoByEight = async () => {
+  const rewardMap = {};
+  for (let i = 0; i < tierDataTwoByEight.length; i++) {
+    if(i < 7){
+      const activationFee = tierDataTwoByEight[i];
+      const up = activationFee * 0.5;
+      const rebirth = activationFee * 0.2;
+      const net = activationFee * 0.3;
+      rewardMap[i + 1] = { up, rebirth, net }; // Tier starts from 1
+      // console.log("rewardMap", i);
+    }else{
+      const activationFee = tierDataTwoByEight[i];
+      const up = 0;
+      const rebirth = activationFee * 0.2;
+      const net = activationFee * 0.8;
+      rewardMap[i + 1] = { up, rebirth, net }; // Tier starts from 1
+    }
+  }
+  return rewardMap;
+};
+
+// Main Execution Function
 const twoByEightHandSlot = async () => {
-    try {
-        const package = await PackageTwoByEightModel.findOne({amount:25});
-        if(!package) return
-        await packageTwoByEightSlotMethod({ tier1: package.tier1, tier2: package.tier2, count: 3, doubleAmount: 1, dataInsert:true, currentTier: 1 });
-        await packageTwoByEightSlotMethod({ tier1: package.tier2, tier2: package.tier3, count: 5, doubleAmount: 1, dataInsert:false, currentTier: 2 });
+  try {
+    const pkg = await PackageTwoByEightModel.findOne({ amount: 25 });
+    if (!pkg) return;
 
-        await packageTwoByEightSlotMethod({ tier1: package.tier3, tier2: package.tier4, count: 9, doubleAmount: 2, dataInsert:false, currentTier: 3 });
-        await packageTwoByEightSlotMethod({ tier1: package.tier4, tier2: package.tier5, count: 17, doubleAmount: 4, dataInsert:false, currentTier: 4 });
+    const rewardMap = await getRewardMapTwoByEight();
 
-        await packageTwoByEightSlotMethod({ tier1: package.tier5, tier2: package.tier6, count: 33, doubleAmount: 8, dataInsert:false, currentTier: 5 });
-        await packageTwoByEightSlotMethod({ tier1: package.tier6, tier2: package.tier7, count: 65, doubleAmount: 16, dataInsert:false, currentTier: 6 });
+    const tierConfig = [
+      { from: 'tier1', to: 'tier2', count: 3, doubleAmount: 1 },
+      { from: 'tier2', to: 'tier3', count: 5, doubleAmount: 1 },
+      { from: 'tier3', to: 'tier4', count: 9, doubleAmount: 2 },
+      { from: 'tier4', to: 'tier5', count: 17, doubleAmount: 4 },
+      { from: 'tier5', to: 'tier6', count: 33, doubleAmount: 8 },
+      { from: 'tier6', to: 'tier7', count: 65, doubleAmount: 16 },
+      { from: 'tier7', to: 'tier8', count: 129, doubleAmount: 32 },
+      { from: 'tier8', to: 'completedUser', count: 257, doubleAmount: 64 },
+    ];
 
-        await packageTwoByEightSlotMethod({ tier1: package.tier6, tier2: package.tier7, count: 129, doubleAmount: 32, dataInsert:false, currentTier: 7 });
-        await packageTwoByEightSlotMethod({ tier1: package.tier7, tier2: package.tier8, count: 257, doubleAmount: 64, dataInsert:false, currentTier: 8 });
+    for (let i = 0; i < tierConfig.length; i++) {
+      const { from, to, count, doubleAmount } = tierConfig[i];
+      const rewards = rewardMap[i + 1] || { up: 0, rebirth: 0, net: 0 };
 
-        await packageTwoByEightSlotMethod({ tier1: package.tier8, tier2: package.completedUser, count: 257, doubleAmount: 2, dataInsert:false, currentTier: 9 })
-        await package.save();
+      // Add next tier activation fee into net for final upgrade
+      if (i === tierConfig.length - 1) {
+        const nextTierFee = tierDataTwoByEight[i + 1] || 0;
+        rewards.net += nextTierFee;
+      }
 
-        await new Promise((resolve) => setTimeout(resolve, 500));
-    } catch (err) {
-        console.log(err.message);
+      await packageTwoByEightSlotMethod({
+        tier1: pkg[from],
+        tier2: pkg[to],
+        count,
+        doubleAmount,
+        currentTier: i + 1,
+        dataInsert: i === 0,
+        up: rewards.up,
+        rebirth: rewards.rebirth,
+        net: rewards.net
+      });
     }
-}
+
+    await pkg.save();
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  } catch (err) {
+    console.error("Error in twoByEightHandSlot:", err.message);
+  }
+};
 
 module.exports = {twoByTwoHandSlot,twoByEightHandSlot}

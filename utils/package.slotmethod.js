@@ -1,181 +1,256 @@
 const { FinalEnterTwoByTwoModel, FinalEnterTwoByEightModel } = require("../models/finalenteruser.model");
+const { HistoryTwoModel, HistoryEightModel } = require("../models/history.model");
 const { RebirthTwoByTwoModel, RebirthTwoByEightModel } = require("../models/rebirth.model");
 const { SlotHistoryTwoByTwoModel, SlotHistoryTwoByEightModel } = require("../models/slothistory.model");
 const { UserTwoByTwoModel, UserTwoByEightModel } = require("../models/user.model");
 
 
+// ✅ Core Method
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+exports.packageTwoByTwoSlotMethod = async ({ tier1, tier2, count, doubleAmount, currentTier, dataInsert, up, rebirth, net }) => {
+  try {
+    const currentTierCount = tier2.length;
+    const parent = tier1[currentTierCount];
+    if (!parent) return;
+
+    const totalToSlice = (currentTierCount + 1) * count;
+    const nextUsers = tier1.slice(currentTierCount * (count - 1), totalToSlice);
+    nextUsers.shift();
+
+    if (nextUsers.length === 0) return;
+
+    const parentFind = await UserTwoByTwoModel.findById(parent);
+    const parentPopulated = await UserTwoByTwoModel.findById(parent).populate('currentTierHistory');
+
+    if (!parentFind || !parentPopulated) return;
+
+    const totalReward = Number(up + rebirth + net);
+
+    parentFind.globalAutoTwoByTwo.usersCheck = nextUsers;
+
+    const historyIndex = parentPopulated.currentTierHistory.findIndex((entry) => entry.tierCount === (currentTier - 1));
+    const status = nextUsers.length >= (count - 1) ? 'ACHIEVED' : 'WAITING';
+    const rewardUserCount = nextUsers.length >= (count - 1) ? (count - 1) : nextUsers.length;
+    // console.log(nextUsers.length, historyIndex);
+    if (historyIndex !== -1) {
+      const entry = parentPopulated.currentTierHistory[historyIndex];
+      let userCheck = false;
+      for (const nextUser of nextUsers) {
+        const alreadyAdded = parentFind.globalAutoTwoByTwo.usersAddCheck.includes(nextUser);
+        userCheck = alreadyAdded;
+      }
+      entry.users = nextUsers.slice(0, (count - 1));
+      entry.status = status;
+      if (!userCheck) {
+        // entry.activationFees += totalReward;
+        entry.upgrationFees += up;
+        entry.rebirthFees += rebirth;
+        entry.netRewardFees += net;
+        entry.usersCount = nextUsers.length;
+      }
+      parentPopulated.markModified(`currentTierHistory.${historyIndex}`);
+      await entry.save();
+    } else {
+      const newHistory = new HistoryTwoModel({
+        finalId: parentFind.userId,
+        userId: parentFind._id,
+        tierCount: currentTier - 1,
+        usersCount: rewardUserCount,
+        usersTargetCount: count - 1,
+        status,
+        // activationFees: totalReward * rewardUserCount,
+        activationFees: totalReward,
+        upgrationFees: up * rewardUserCount,
+        rebirthFees: rebirth * rewardUserCount,
+        netRewardFees: net * rewardUserCount,
+        users: nextUsers.slice(0, (count - 1))
+      });
+      await newHistory.save();
+      parentPopulated.currentTierHistory.push(newHistory._id);
+    }
 
 
-// ----------------------------------- TWO BY TWO METHOD CREATE START ------------------------------------------------------
-exports.packageTwoByTwoSlotMethod = async ({ tier1, tier2, count, doubleAmount, currentTier, dataInsert }) => {
-    try {
-        const currentTierCount = tier2.length;
-        const parent = tier1[currentTierCount];
-        if (!parent) return;
-        const nextUsers = tier1.slice(currentTierCount * (count - 1), (currentTierCount + 1) * (count));
-        nextUsers.shift();
-        if (nextUsers.length == 0) return;
-        const parentFind = await UserTwoByTwoModel.findById(parent);
-        if (!parentFind) return;
-        const parent2Find = await UserTwoByTwoModel.findById(parent);
-        if (!parent2Find) return;
-        const index = parent2Find.currentTierHistory.findIndex(
-            (entry) => entry.tierCount === (currentTier - 1)
-        );
-        if (nextUsers.length != 0) {
-            if (index !== -1) {
-                if (nextUsers.length < (count - 1)) {
-                    parent2Find.currentTierHistory[index].usersCount = nextUsers.length;
-                    parent2Find.currentTierHistory[index].status = 'WAITING';
-                } else {
-                    parent2Find.currentTierHistory[index].usersCount = nextUsers.length;
-                    parent2Find.currentTierHistory[index].status = 'ACHIEVED';
-                    parent2Find.currentTierHistory[index].activationFees = parent2Find.activationFees;
-                    parent2Find.currentTierHistory[index].upgrationFees = parent2Find.upgrationFees;
-                    parent2Find.currentTierHistory[index].rebirthFees = parent2Find.rebirthFees;
-                    parent2Find.currentTierHistory[index].netRewardFees = parent2Find.netRewardFees;
-                }
-            } else {
-                parent2Find.currentTierHistory.push({ tierCount: currentTier - 1, usersCount: 0 < nextUsers.length, status: 'WAITING', usersTargetCount: count - 1, activationFees: parent2Find.activationFees, upgrationFees: parent2Find.upgrationFees, rebirthFees: parent2Find.rebirthFees, netRewardFees: parent2Find.netRewardFees });
-            }
-        }
 
-        await parent2Find.save();
-        if (nextUsers.length < (count - 1)) return;
-        // if (dataInsert) {
-        //     parentFind.activationFees = 5;
-        //     parentFind.upgrationFees = 2.5;
-        //     parentFind.rebirthFees = 1;
-        //     parentFind.netRewardFees = 1.5;
-        //     const finalEnterUserSingle = await FinalEnterTwoByTwoModel.findOne({ userId: parentFind.userId });
-        //     finalEnterUserSingle.activationFees += 5;
-        //     finalEnterUserSingle.upgrationFees += 2.5;
-        //     finalEnterUserSingle.rebirthFees += 1;
-        //     finalEnterUserSingle.netRewardFees += 1.5;
-        //     await finalEnterUserSingle.save();
-        // }
+    const totalActivation = (nextUsers.length < 1) ? (totalReward) : totalReward;
+
+    for (const nextUser of nextUsers) {
+      // await delay(2000); // 2-second delay per user
+      const alreadyAdded = parentFind.globalAutoTwoByTwo.usersAddCheck.includes(nextUser);
+      if (!alreadyAdded && parentFind.globalAutoTwoByTwo.usersAddCheck.length < (count - 1)) {
+
         parentFind.currentTierCount = currentTier;
         parentFind.currentTierType = "PARENT";
-        parentFind.activationFees *= doubleAmount;
-        parentFind.upgrationFees *= doubleAmount;
-        parentFind.rebirthFees *= doubleAmount;
-        parentFind.netRewardFees *= doubleAmount;
-        parentFind.currentTierCount = currentTier;
+        parentFind.activationFees = totalActivation;
+        parentFind.upgrationFees += up;
+        parentFind.rebirthFees += rebirth;
+        parentFind.netRewardFees += net;
 
         const finalEnterUser = await FinalEnterTwoByTwoModel.findOne({ userId: parentFind.userId });
-
         if (finalEnterUser) {
-            if (doubleAmount % 2 === 0) {
-                finalEnterUser.activationFees += parent2Find.activationFees;
-                finalEnterUser.rebirthFees += parent2Find.rebirthFees;
-                finalEnterUser.netRewardFees += parent2Find.netRewardFees;
-                finalEnterUser.restrebirthFees += parent2Find.rebirthFees;
-            }
-            finalEnterUser.currentTierCount = currentTier;
+          finalEnterUser.activationFees = totalActivation;
+          finalEnterUser.rebirthFees += rebirth;
+          finalEnterUser.netRewardFees += net;
+          finalEnterUser.restrebirthFees += rebirth;
+          finalEnterUser.upgrationFees += up;
+          finalEnterUser.currentTierCount = currentTier;
+          await finalEnterUser.save();
         }
-        const newRebirth = new RebirthTwoByTwoModel({ clientId: parentFind._id, activationFees: parentFind.activationFees, currentTierCount: parentFind.currentTierCount, investment: parentFind.investment, netRewardFees: parentFind.netRewardFees, rebirthAuto: parentFind.rebirthAuto, rebirthFees: parentFind.rebirthFees, upgrationFees: parentFind.upgrationFees })
-        const newSlotHistory = new SlotHistoryTwoByTwoModel({ childs: nextUsers, parentId: parent, activationFees: parentFind.activationFees, currentTierCount: parentFind.currentTierCount, investment: parentFind.investment, netRewardFees: parentFind.netRewardFees, rebirthAuto: parentFind.rebirthAuto, rebirthFees: parentFind.rebirthFees, upgrationFees: parentFind.upgrationFees })
 
-        parent2Find.history.push(newRebirth._id);
-        parent2Find.slothistory.push(newSlotHistory._id);
-        await newRebirth.save()
-        await newSlotHistory.save()
-        await finalEnterUser.save();
-        await parentFind.save();
-        await parent2Find.save();
-        tier2.push(parentFind);
-    } catch (error) {
-        console.error("Error in packageTwoByTwoSlotMethod:", error);
+        const [newRebirth, newSlotHistory] = await Promise.all([
+          RebirthTwoByTwoModel.create({
+            clientId: parentFind._id,
+            currentTierCount: parentFind.currentTierCount,
+            investment: parentFind.investment,
+            activationFees: totalReward,
+            netRewardFees: net,
+            rebirthAuto: parentFind.rebirthAuto,
+            rebirthFees: rebirth,
+            upgrationFees: up
+          }),
+          SlotHistoryTwoByTwoModel.create({
+            childs: nextUsers,
+            parentId: parent,
+            currentTierCount: parentFind.currentTierCount,
+            investment: parentFind.investment,
+            activationFees: totalReward,
+            netRewardFees: net,
+            rebirthAuto: parentFind.rebirthAuto,
+            rebirthFees: rebirth,
+            upgrationFees: up
+          })
+        ]);
+
+        parentPopulated.history.push(newRebirth._id);
+        parentPopulated.slothistory.push(newSlotHistory._id);
+        parentFind.globalAutoTwoByTwo.usersAddCheck.push(nextUser);
+      }
     }
+
+    if (nextUsers.length >= (count - 1)) {
+      parentFind.globalAutoTwoByTwo.usersAddCheck = [];
+      parentFind.globalAutoTwoByTwo.usersCheck = [];
+      tier2.push(parentFind);
+      await Promise.all([parentFind.save(), parentPopulated.save()]);
+    } else {
+      await Promise.all([parentFind.save(), parentPopulated.save()]);
+    }
+  } catch (error) {
+    console.error("❌ Error in packageTwoByTwoSlotMethod:", error.message);
+  }
 };
-// ----------------------------------- TWO BY TWO METHOD CREATE END ------------------------------------------------------
 
 
+exports.packageTwoByEightSlotMethod = async ({ tier1, tier2, count, doubleAmount, currentTier, dataInsert, up, rebirth, net }) => {
+  try {
+    const currentTierCount = tier2.length;
+    const parent = tier1[currentTierCount];
+    if (!parent) return;
+
+    const totalToSlice = (currentTierCount + 1) * count;
+    const nextUsers = tier1.slice(currentTierCount * (count - 1), totalToSlice);
+    nextUsers.shift(); // remove parent itself
+
+    if (nextUsers.length === 0) return;
+    const parentFind = await UserTwoByEightModel.findById(parent);
+    const parentPopulated = await UserTwoByEightModel.findById(parent).populate('currentTierHistory');
+
+    if (!parentFind || !parentPopulated) return;
+
+    const totalReward = Number(up + rebirth + net);
 
 
+    // Save next users under parent's check
+    parentFind.globalAutoTwoByEight.usersCheck = nextUsers;
 
-// ----------------------------------- TWO BY EIGHT METHOD CREATE START ------------------------------------------------------
-exports.packageTwoByEightSlotMethod = async ({ tier1, tier2, count, doubleAmount, currentTier, dataInsert }) => {
-    try {
-        const currentTierCount = tier2.length;
-        const parent = tier1[currentTierCount];
-        if (!parent) return;
-        // const nextUsers = tier1.slice(currentTierCount * count, (currentTierCount + 1) * count);
-        const nextUsers = tier1.slice(currentTierCount * (count - 1), (currentTierCount + 1) * (count));
-        nextUsers.shift();
-        const parentFind = await UserTwoByEightModel.findById(parent);
-        if (!parentFind) return;
-        const parent2Find = await UserTwoByEightModel.findById(parent);
-        if (!parent2Find) return;
-        // Find index of existing tierCount
-        const allFind = await UserTwoByEightModel.find({ _id: parent });
-        const index = parent2Find.currentTierHistory.findIndex(
-            (entry) => entry.tierCount === (currentTier - 1)
-        );
-        if (nextUsers.length != 0) {
-            if (index !== -1) {
-                if (nextUsers.length < (count - 1)) {
-                    parent2Find.currentTierHistory[index].usersCount = nextUsers.length;
-                    parent2Find.currentTierHistory[index].status = 'WAITING';
-                } else {
-                    parent2Find.currentTierHistory[index].usersCount = nextUsers.length;
-                    parent2Find.currentTierHistory[index].status = 'ACHIEVED';
-                    parent2Find.currentTierHistory[index].activationFees = parent2Find.activationFees;
-                    parent2Find.currentTierHistory[index].upgrationFees = parent2Find.upgrationFees;
-                    parent2Find.currentTierHistory[index].rebirthFees = parent2Find.rebirthFees;
-                    parent2Find.currentTierHistory[index].netRewardFees = parent2Find.netRewardFees;
-                }
-            } else {
-                parent2Find.currentTierHistory.push({ tierCount: currentTier - 1, usersCount: nextUsers.length, status: 'WAITING', usersTargetCount: (count - 1), activationFees: parent2Find.activationFees, upgrationFees: parent2Find.upgrationFees, rebirthFees: parent2Find.rebirthFees, netRewardFees: parent2Find.netRewardFees });
-            }
-        }
-        await parent2Find.save();
-        if (nextUsers.length < (count - 1)) return;
-        // if (dataInsert) {
-        //     parentFind.activationFees = 5;
-        //     parentFind.upgrationFees = 2.5;
-        //     parentFind.rebirthFees = 1;
-        //     parentFind.netRewardFees = 1.5;
-        //     const finalEnterUserSingle = await FinalEnterTwoByEightModel.findOne({ userId: parentFind.userId });
-        //     finalEnterUserSingle.activationFees += 5;
-        //     finalEnterUserSingle.upgrationFees += 2.5;
-        //     finalEnterUserSingle.rebirthFees += 1;
-        //     finalEnterUserSingle.netRewardFees += 1.5;
-        //     // finalEnterUserSingle.restrebirthFees += 1.5;
-        //     await finalEnterUserSingle.save();
-        // }
-
-        parentFind.currentTierType = "PARENT";
-        parentFind.activationFees *= doubleAmount;
-        parentFind.upgrationFees *= doubleAmount;
-        parentFind.rebirthFees *= doubleAmount;
-        parentFind.netRewardFees *= doubleAmount;
-        parentFind.currentTierCount = currentTier;
-
-        const finalEnterUser = await FinalEnterTwoByEightModel.findOne({ userId: parentFind.userId });
-
-        if (finalEnterUser) {
-            if (doubleAmount % 2 === 0) {
-                finalEnterUser.activationFees += parent2Find.activationFees;
-                finalEnterUser.rebirthFees += parent2Find.rebirthFees;
-                finalEnterUser.netRewardFees += parent2Find.netRewardFees;
-                finalEnterUser.restrebirthFees += parent2Find.rebirthFees;
-            }
-            finalEnterUser.currentTierCount = currentTier;
-        }
-        const newRebirth = new RebirthTwoByEightModel({ clientId: parentFind._id, activationFees: parentFind.activationFees, currentTierCount: parentFind.currentTierCount, investment: parentFind.investment, netRewardFees: parentFind.netRewardFees, rebirthAuto: parentFind.rebirthAuto, rebirthFees: parentFind.rebirthFees, upgrationFees: parentFind.upgrationFees })
-        const newSlotHistory = new SlotHistoryTwoByEightModel({ childs: nextUsers, parentId: parent, activationFees: parentFind.activationFees, currentTierCount: parentFind.currentTierCount, investment: parentFind.investment, netRewardFees: parentFind.netRewardFees, rebirthAuto: parentFind.rebirthAuto, rebirthFees: parentFind.rebirthFees, upgrationFees: parentFind.upgrationFees })
-        parent2Find.history.push(newRebirth._id);
-        parent2Find.slothistory.push(newSlotHistory._id);
-        await newRebirth.save();
-        await newSlotHistory.save();
-        await finalEnterUser.save();
-        await parentFind.save();
-        await parent2Find.save();
-        tier2.push(parentFind);
-        // await new Promise((resolve) => setTimeout(resolve, 100));
-    } catch (error) {
-        console.error("Error in packageTwoByTwoSlotMethod:", error);
+    const historyIndex = parentPopulated.currentTierHistory.findIndex((entry) => entry.tierCount === (currentTier - 1));
+    const status = nextUsers.length >= (count - 1) ? 'ACHIEVED' : 'WAITING';
+    const rewardUserCount = nextUsers.length >= (count - 1) ? (count - 1) : nextUsers.length;
+    if (historyIndex !== -1) {
+      const entry = parentPopulated.currentTierHistory[historyIndex];
+      let userCheck = false;
+      for (const nextUser of nextUsers) {
+        const alreadyAdded = parentFind.globalAutoTwoByEight.usersAddCheck.includes(nextUser);
+        userCheck = alreadyAdded;
+      }
+      entry.users = nextUsers.slice(0, (count - 1));
+      entry.status = status;
+      if (!userCheck) {
+        // entry.activationFees += totalReward;
+        entry.upgrationFees += up;
+        entry.rebirthFees += rebirth;
+        entry.netRewardFees += net;
+        entry.usersCount = nextUsers.length;
+      }
+    } else {
+      const newHistory = new HistoryEightModel({
+        finalId: parentFind.userId,
+        userId: parentFind._id,
+        tierCount: currentTier - 1,
+        usersCount: rewardUserCount,
+        usersTargetCount: count - 1,
+        status,
+        // activationFees: totalReward * rewardUserCount,
+        activationFees: totalReward,
+        upgrationFees: up * rewardUserCount,
+        rebirthFees: rebirth * rewardUserCount,
+        netRewardFees: net * rewardUserCount,
+        users: nextUsers.slice(0, (count - 1))
+      });
+      await newHistory.save();
+      parentPopulated.currentTierHistory.push(newHistory._id);
     }
-}
-// ----------------------------------- TWO BY EIGHT METHOD CREATE END ------------------------------------------------------
+
+
+
+    // console.log(nextUsers,count-1)
+    // console.log(nextUsers.length, count - 1)
+    // return
+
+    const totalActivation = (nextUsers.length < 1) ? (totalReward) : totalReward;
+
+    for (const nextUser of nextUsers) {
+      const alreadyAdded = parentFind.globalAutoTwoByEight.usersAddCheck.includes(nextUser);
+      if (!alreadyAdded && parentFind.globalAutoTwoByEight.usersAddCheck.length < (count - 1)) {
+
+        parentFind.currentTierCount = currentTier;
+        parentFind.currentTierType = "PARENT";
+        parentFind.activationFees = totalActivation;
+        parentFind.upgrationFees += up;
+        parentFind.rebirthFees += rebirth;
+        parentFind.netRewardFees += net;
+        const finalEnterUser = await FinalEnterTwoByEightModel.findOne({ userId: parentFind.userId });
+        if (finalEnterUser) {
+          finalEnterUser.activationFees = totalActivation;
+          finalEnterUser.rebirthFees += rebirth;
+          finalEnterUser.netRewardFees += net;
+          finalEnterUser.restrebirthFees += rebirth;
+          finalEnterUser.upgrationFees += up;
+          finalEnterUser.currentTierCount = currentTier;
+          await finalEnterUser.save();
+        }
+
+        const [newRebirth, newSlotHistory] = await Promise.all([
+          new RebirthTwoByEightModel({ clientId: parentFind._id, currentTierCount: parentFind.currentTierCount, investment: parentFind.investment, activationFees: totalReward, netRewardFees: net, rebirthAuto: parentFind.rebirthAuto, rebirthFees: rebirth, upgrationFees: up }).save(),
+          new SlotHistoryTwoByEightModel({ childs: nextUsers, parentId: parent, currentTierCount: parentFind.currentTierCount, investment: parentFind.investment, activationFees: totalReward, netRewardFees: net, rebirthAuto: parentFind.rebirthAuto, rebirthFees: rebirth, upgrationFees: up }).save()
+        ]);
+
+        parentPopulated.history.push(newRebirth._id);
+        parentPopulated.slothistory.push(newSlotHistory._id);
+        parentFind.globalAutoTwoByEight.usersAddCheck.push(nextUser);
+      }
+    }
+
+    await parentPopulated.save();
+    await parentFind.save();
+
+    if (nextUsers.length >= (count - 1)) {
+      parentFind.globalAutoTwoByEight.usersAddCheck = [];
+      parentFind.globalAutoTwoByEight.usersCheck = [];
+      await Promise.all([parentFind.save(), parentPopulated.save()]);
+      tier2.push(parentFind);
+    }
+  } catch (error) {
+    console.error("Error in packageTwoByEightSlotMethod:", error);
+  }
+};
